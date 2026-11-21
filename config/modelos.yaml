@@ -1,0 +1,25 @@
+# Modelo de IA e nível de esforço por "rota" (tipo de tarefa).
+# Ponto de partida — será calibrado com números na Fase 7.
+# Trocar o provedor aqui não deve exigir mudança no núcleo (interface ProvedorIA).
+
+rotas:
+  dia_a_dia:            # registrar, corrigir, consultar
+    provedor: claude
+    modelo: claude-haiku-5-5
+    esforco: low
+  visao:                # foto do prato
+    provedor: claude
+    modelo: claude-sonnet-5-5
+    esforco: medium
+  dificil:              # conversas ambíguas / complexas
+    provedor: claude
+    modelo: claude-sonnet-5-5
+    esforco: medium
+  referencia:           # só para comparação nos testes
+    provedor: claude
+    modelo: claude-opus-5-5
+    esforco: medium
+
+transcricao:
+  provedor: groq
+  modelo: whisper-large-v3-turbo

@@ -1,0 +1,22 @@
+# Segredos (chaves de API) — NUNCA versionar
+.env
+
+# Ambiente virtual e cache do Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Banco de dados local e uploads de teste
+*.db
+*.sqlite3
+uploads/
+
+# Configurações locais do Claude Code (pessoais)
+.claude/settings.local.json
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
