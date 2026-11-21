@@ -52,12 +52,12 @@ NutrIA/
 
 - [x] Instalar Python 3.12+ e conferir com `python --version` · P
 - [x] Iniciar repositório Git e criar `.gitignore` (inclui `.env`, `*.db`, `.venv/`) · P
-- [ ] Criar ambiente virtual (`.venv`) e `requirements.txt` (fastapi, uvicorn, sqlalchemy, pydantic-settings, pyyaml, anthropic, pytest) · P
+- [x] Criar ambiente virtual (`.venv`) e `requirements.txt` (fastapi, uvicorn, sqlalchemy, pydantic-settings, pyyaml, anthropic, pytest) · P
 - [x] Criar a estrutura de pastas acima (vazia) · P
-- [ ] `app/config.py`: ler variáveis do `.env` e criar o `.env.example` · P
-- [ ] `app/main.py` com a rota `GET /health` · P
-- [ ] `app/banco/`: conexão SQLite + criação das tabelas ao iniciar · P
-- [ ] Marco: `localhost:8000/health` responde "ok" · P
+- [x] `app/config.py`: ler variáveis do `.env` e criar o `.env.example` · P
+- [x] `app/main.py` com a rota `GET /health` · P
+- [x] `app/banco/`: conexão SQLite + criação das tabelas ao iniciar · P
+- [x] Marco: `localhost:8000/health` responde "ok" · P
 
 ## Fase 1 — Simulador
 

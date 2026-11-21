@@ -1,22 +1,24 @@
+# Versões fixadas (==) para que qualquer máquina instale exatamente o mesmo.
+
 # Servidor web
-fastapi
-uvicorn[standard]
-python-multipart      # upload de foto/áudio no simulador
+fastapi==0.165.0
+uvicorn[standard]==0.54.0
+python-multipart==0.0.34    # upload de foto/áudio no simulador
 
 # Banco de dados
-sqlalchemy
+SQLAlchemy==2.1.9
 
 # Configuração
-pydantic-settings     # lê o .env
-pyyaml                # lê config/*.yaml
+pydantic-settings==2.16.3   # lê o .env
+PyYAML==6.0.4               # lê config/*.yaml
 
 # Nutrição
-rapidfuzz             # busca aproximada de nomes de alimentos (Fase 2)
+RapidFuzz==3.14.6           # busca aproximada de nomes de alimentos (Fase 2)
 
 # IA e áudio
-anthropic             # SDK oficial do Claude (Fase 3)
-groq                  # transcrição de áudio (Fase 6)
+anthropic==2.12.0           # SDK oficial do Claude (Fase 3)
+groq==1.7.0                 # transcrição de áudio (Fase 6)
 
 # Testes
-pytest
-httpx                 # cliente de teste do FastAPI
+pytest==9.2.0
+httpx==0.28.1               # cliente de teste do FastAPI

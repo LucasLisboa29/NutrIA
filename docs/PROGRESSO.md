@@ -5,9 +5,9 @@
 
 ## Agora
 
-- **Fase atual:** Fase 0, Fundação (em andamento)
-- **Próximo passo:** criar o ambiente virtual, instalar o `requirements.txt` e escrever
-  `app/config.py` + `app/main.py` com a rota `/health`.
+- **Fase atual:** Fase 1, Simulador (não iniciada)
+- **Próximo passo:** definir `MensagemEntrada`/`MensagemSaida` em `app/canais/base.py` e
+  criar as tabelas `usuarios` e `mensagens`.
 - **Bloqueios:** nenhum. A API key da Anthropic só será necessária na Fase 3.
 
 ## Status das fases
@@ -15,7 +15,7 @@
 | Fase | Status |
 |------|--------|
 | Planejamento (docs 01–04) | ✅ Concluído |
-| 0 — Fundação | 🟡 Em andamento |
+| 0 — Fundação | ✅ Concluído |
 | 1 — Simulador | ⬜ Não iniciado |
 | 2 — Base nutricional | ⬜ Não iniciado |
 | 3 — Agente v1 (texto) | ⬜ Não iniciado |
@@ -36,6 +36,7 @@
 | 2026-11-21 | Simulador web próprio em vez do WhatsApp para testes | Custo zero e painel de depuração |
 | 2026-11-21 | Perguntas do bot sem limite fixo, calibradas nos testes | Conversa fluida, não engessada |
 | 2026-11-21 | Tabela TACO como base nutricional | Alimentos brasileiros, números confiáveis |
+| 2026-11-21 | Versões fixadas (`==`) no `requirements.txt` | Instalação idêntica em qualquer máquina |
 
 ## Diário de sessões
 
@@ -44,3 +45,7 @@
 - Estrutura do projeto criada: pastas, `CLAUDE.md`, `.gitignore`, `.env.example`,
   `requirements.txt`, `config/modelos.yaml`, comandos `/retomar` e `/encerrar`.
 - Git iniciado e conectado ao GitHub: https://github.com/LucasLisboa29/NutrIA (branch `main`).
+- **Fase 0 concluída:** `.venv` com dependências fixadas; `app/config.py` (lê `.env` e
+  `config/*.yaml`); `app/banco/sessao.py` (SQLite + SQLAlchemy); `app/main.py` com
+  `GET /health` checando o banco; primeiro teste (`tests/test_health.py`) passando.
+- Marco conferido: `localhost:8000/health` → `{"status":"ok","banco":"ok"}`.
