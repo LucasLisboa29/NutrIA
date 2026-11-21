@@ -43,4 +43,4 @@
 - Planejamento feito por etapas e validado: visão/escopo, requisitos, roadmap, tarefas.
 - Estrutura do projeto criada: pastas, `CLAUDE.md`, `.gitignore`, `.env.example`,
   `requirements.txt`, `config/modelos.yaml`, comandos `/retomar` e `/encerrar`.
-- Git iniciado (sem commits ainda).
+- Git iniciado e conectado ao GitHub: https://github.com/LucasLisboa29/NutrIA (branch `main`).
