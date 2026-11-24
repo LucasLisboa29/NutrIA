@@ -11,5 +11,6 @@ Encerre a sessão de trabalho no NutrIA:
    - "Decisões": inclua as decisões novas (data, decisão e motivo);
    - "Diário de sessões": uma entrada nova com data, título curto e 2 a 5 tópicos do que foi feito.
 3. Me mostre um resumo do que mudou e pergunte se quero fazer commit (não faça o commit sem eu confirmar).
+   Depois de cada commit, faça o push para o GitHub automaticamente.
 
 $ARGUMENTS

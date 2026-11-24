@@ -69,3 +69,5 @@ uvicorn app.main:app --reload
   anotações). Nunca misturar com o código, `docs/` ou a raiz do projeto.
 - Gosta de validar por etapas antes de seguir.
 - Chaves de API ficam só no `.env` (nunca no código ou no Git).
+- **Git:** commit só quando ele pedir ou confirmar. **Todo commit é seguido de push
+  automático** para o GitHub (`origin main`), sem perguntar de novo.
