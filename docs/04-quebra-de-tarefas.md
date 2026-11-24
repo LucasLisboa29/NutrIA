@@ -61,17 +61,17 @@ NutrIA/
 
 ## Fase 1 — Simulador
 
-- [ ] Definir `MensagemEntrada` e `MensagemSaida` (texto, imagem, áudio, remetente, horário) em `canais/base.py` · P
-- [ ] Tabelas `usuarios` e `mensagens` · P
-- [ ] Rota `POST /simulador/mensagem` (texto + arquivo opcional) → `AdaptadorSimulador` → orquestrador · M
-- [ ] Orquestrador provisório: bot "eco" que repete a mensagem · P
-- [ ] Rota para listar o histórico de um usuário · P
-- [ ] Tela do chat estilo WhatsApp (balões, horário, rolagem) em `simulador/` · M
-- [ ] Envio de foto (upload) e de áudio (gravar pelo microfone ou enviar arquivo) [RF28] · M
-- [ ] Seletor de "número de telefone" para alternar entre usuários de teste [RF29] · P
-- [ ] Botão "resetar usuário" [RF32] · P
-- [ ] Indicador de "digitando..." enquanto o servidor processa · P
-- [ ] Marco: 2 usuários com históricos separados · P
+- [x] Definir `MensagemEntrada` e `MensagemSaida` (texto, imagem, áudio, remetente, horário) em `canais/base.py` · P
+- [x] Tabelas `usuarios` e `mensagens` · P
+- [x] Rota `POST /simulador/mensagem` (texto + arquivo opcional) → `AdaptadorSimulador` → orquestrador · M
+- [x] Orquestrador provisório: bot "eco" que repete a mensagem · P
+- [x] Rota para listar o histórico de um usuário · P
+- [x] Tela do chat estilo WhatsApp (balões, horário, rolagem) em `simulador/` · M
+- [x] Envio de foto (upload) e de áudio (gravar pelo microfone ou enviar arquivo) [RF28] · M
+- [x] Seletor de "número de telefone" para alternar entre usuários de teste [RF29] · P
+- [x] Botão "resetar usuário" [RF32] · P
+- [x] Indicador de "digitando..." enquanto o servidor processa · P
+- [x] Marco: 2 usuários com históricos separados · P
 
 ## Fase 2 — Base nutricional
 

@@ -52,7 +52,20 @@ uvicorn app.main:app --reload
 ## Sobre o Lucas (como trabalhar com ele)
 
 - Estudante de Ciência da Computação. Conversar **em português**.
-- Quer **aprender** com o projeto: explicar conceitos novos de forma simples (ele não
-  conhecia a LGPD, por exemplo). Evitar jargão sem explicação.
+- Está cursando uma matéria de IA e usa o NutrIA para ver na prática como funciona um
+  projeto real com IA.
+
+### Modo de trabalho: aprendizado (padrão) × só desenvolver
+
+- **Padrão = modo aprendizado.** Ao construir algo, explicar o que foi feito e os
+  conceitos por trás (com foco em IA quando aparecer: prompts, tool use, tokens,
+  modelos, custo, latência, avaliação). Linguagem simples, sem jargão sem explicação
+  (ele não conhecia a LGPD, por exemplo). Citar os arquivos para ele se situar.
+- **Modo só desenvolver:** quando ele disser algo como "não precisa explicar", "só faz"
+  ou "modo direto", desenvolver normalmente e responder curto, só com o resultado.
+  Vale até ele pedir para voltar a explicar (ou até a próxima sessão, que começa no
+  padrão de novo).
+- **Material de estudo vai em `Conteudo adicional/`** (aulas, resumos, exercícios,
+  anotações). Nunca misturar com o código, `docs/` ou a raiz do projeto.
 - Gosta de validar por etapas antes de seguir.
 - Chaves de API ficam só no `.env` (nunca no código ou no Git).

@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     groq_api_key: str = ""  # necessária a partir da Fase 6
     database_url: str = f"sqlite:///{RAIZ / 'nutria.db'}"
     timezone: str = "America/Sao_Paulo"
+    # Onde ficam as fotos e áudios recebidos (fora do Git, ver .gitignore).
+    pasta_uploads: Path = RAIZ / "uploads"
 
 
 @lru_cache

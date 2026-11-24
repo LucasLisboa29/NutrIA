@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NutrIA · Simulador</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="layout">
+    <!-- Celular com a conversa -->
+    <section class="celular" aria-label="Conversa com o NutrIA">
+      <header class="topo">
+        <div class="avatar">🥗</div>
+        <div class="contato">
+          <strong>NutrIA</strong>
+          <span id="status">online</span>
+        </div>
+      </header>
+
+      <div id="conversa" class="conversa" aria-live="polite"></div>
+
+      <form id="form" class="barra">
+        <input id="arquivo" type="file" accept="image/*,audio/*" hidden>
+        <button type="button" id="btn-anexo" class="icone" title="Enviar foto ou arquivo de áudio">📎</button>
+        <div class="campo">
+          <div id="previa" class="previa" hidden>
+            <span id="previa-nome"></span>
+            <button type="button" id="btn-tirar-anexo" title="Remover anexo">✕</button>
+          </div>
+          <input id="texto" type="text" placeholder="Mensagem" autocomplete="off">
+        </div>
+        <button type="button" id="btn-microfone" class="icone" title="Gravar áudio (clique para começar e para parar)">🎤</button>
+        <button type="submit" id="btn-enviar" class="enviar" title="Enviar">➤</button>
+      </form>
+    </section>
+
+    <!-- Controles do simulador (não existem no WhatsApp) -->
+    <aside class="painel">
+      <h1>Simulador NutrIA</h1>
+
+      <section>
+        <h2>Usuário de teste</h2>
+        <label for="telefone">Telefone</label>
+        <div class="linha">
+          <select id="telefone"></select>
+          <button type="button" id="btn-novo">+ Novo</button>
+        </div>
+        <button type="button" id="btn-resetar" class="perigo">Resetar este usuário</button>
+        <p class="dica">Resetar apaga as mensagens e os arquivos deste número. Os outros não são afetados.</p>
+      </section>
+
+      <section>
+        <h2>Última resposta</h2>
+        <p>Tempo no servidor: <strong id="tempo">-</strong></p>
+        <pre id="json" class="json">Mande uma mensagem para ver o JSON aqui.</pre>
+        <p class="dica">Na Fase 3 este painel vai mostrar as ferramentas chamadas, os dados gravados, tokens e custo.</p>
+      </section>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

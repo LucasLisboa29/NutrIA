@@ -5,9 +5,11 @@
 
 ## Agora
 
-- **Fase atual:** Fase 1, Simulador (não iniciada)
-- **Próximo passo:** definir `MensagemEntrada`/`MensagemSaida` em `app/canais/base.py` e
-  criar as tabelas `usuarios` e `mensagens`.
+- **Fase atual:** Fase 2, Base nutricional (não iniciada)
+- **Próximo passo:** obter a Tabela TACO (4ª edição, NEPA/Unicamp), salvar em `dados/` e
+  escrever o script de importação para a tabela `alimentos`.
+- **A conferir pelo Lucas:** gravar um áudio pelo microfone no simulador (o teste
+  automático não consegue usar o microfone).
 - **Bloqueios:** nenhum. A API key da Anthropic só será necessária na Fase 3.
 
 ## Status das fases
@@ -16,7 +18,7 @@
 |------|--------|
 | Planejamento (docs 01–04) | ✅ Concluído |
 | 0 — Fundação | ✅ Concluído |
-| 1 — Simulador | ⬜ Não iniciado |
+| 1 — Simulador | ✅ Concluído |
 | 2 — Base nutricional | ⬜ Não iniciado |
 | 3 — Agente v1 (texto) | ⬜ Não iniciado |
 | 4 — Perfil e metas | ⬜ Não iniciado |
@@ -37,6 +39,9 @@
 | 2026-11-21 | Perguntas do bot sem limite fixo, calibradas nos testes | Conversa fluida, não engessada |
 | 2026-11-21 | Tabela TACO como base nutricional | Alimentos brasileiros, números confiáveis |
 | 2026-11-21 | Versões fixadas (`==`) no `requirements.txt` | Instalação idêntica em qualquer máquina |
+| 2026-11-21 | Histórico e mídias gravados pelo núcleo (`app/nucleo/historico.py`), não pelo canal | Todo canal grava igual; o WhatsApp reaproveita |
+| 2026-11-21 | Mídias em `uploads/<id do usuário>/`, datas em UTC no banco | Telefone fora dos nomes de arquivo (LGPD); fuso só na exibição |
+| 2026-11-21 | Testes usam banco e uploads temporários (`tests/conftest.py`) | Nunca mexer no `nutria.db` de desenvolvimento |
 
 ## Diário de sessões
 
@@ -49,3 +54,14 @@
   `config/*.yaml`); `app/banco/sessao.py` (SQLite + SQLAlchemy); `app/main.py` com
   `GET /health` checando o banco; primeiro teste (`tests/test_health.py`) passando.
 - Marco conferido: `localhost:8000/health` → `{"status":"ok","banco":"ok"}`.
+
+### 2026-11-21 — Sessão 1 (cont.): Fase 1, simulador
+- `app/canais/base.py`: `MensagemEntrada`, `MensagemSaida`, `Midia` e o protocolo `Adaptador`.
+- Tabelas `usuarios` e `mensagens`; `app/nucleo/historico.py` grava, lista e apaga
+  (inclusive os arquivos de mídia).
+- `app/nucleo/orquestrador.py`: bot "eco" provisório.
+- `app/canais/simulador.py`: `POST /simulador/mensagem` (texto + foto/áudio),
+  histórico, lista de usuários, resetar e servir mídia.
+- Tela estilo WhatsApp em `simulador/` (balões, horário, "digitando...", foto, gravação de
+  áudio, seletor de telefone, resetar, painel com o JSON e o tempo da última resposta).
+- 10 testes passando. Marco conferido no navegador: 2 usuários com históricos separados.
