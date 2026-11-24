@@ -5,11 +5,14 @@ Cada classe aqui vira uma tabela. Elas vão sendo adicionadas fase a fase:
 - Fase 2: alimentos, porcoes
 - Fase 3: refeicoes, itens_refeicao
 - Fase 4: perfis, historico_peso
+
+Sobre apagar: o SQLite não aplica "ON DELETE CASCADE" sozinho, então quem apaga em
+cascata é o SQLAlchemy (o `cascade="all, delete-orphan"` nos relacionamentos).
 """
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.banco.sessao import Base
@@ -30,6 +33,11 @@ class Usuario(Base):
         back_populates="usuario",
         cascade="all, delete-orphan",
         order_by="Mensagem.id",
+    )
+    refeicoes: Mapped[list["Refeicao"]] = relationship(
+        back_populates="usuario",
+        cascade="all, delete-orphan",
+        order_by="Refeicao.data_hora",
     )
 
 
@@ -75,3 +83,62 @@ class Alimento(Base):
     gordura: Mapped[float | None] = mapped_column(Float)  # g (lipídeos)
     fibra: Mapped[float | None] = mapped_column(Float)  # g
     sodio: Mapped[float | None] = mapped_column(Float)  # mg
+
+
+class Refeicao(Base):
+    """Uma refeição: café da manhã, almoço etc., com a data e hora em que foi comida."""
+
+    __tablename__ = "refeicoes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(
+        ForeignKey("usuarios.id", ondelete="CASCADE"), index=True
+    )
+    # cafe_da_manha, lanche_da_manha, almoco, lanche_da_tarde, jantar ou ceia
+    tipo: Mapped[str] = mapped_column(String(20))
+    data_hora: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)  # UTC
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+
+    usuario: Mapped[Usuario] = relationship(back_populates="refeicoes")
+    itens: Mapped[list["ItemRefeicao"]] = relationship(
+        back_populates="refeicao",
+        cascade="all, delete-orphan",
+        order_by="ItemRefeicao.id",
+    )
+
+
+class ItemRefeicao(Base):
+    """Um alimento dentro de uma refeição, com a quantidade e os valores já calculados.
+
+    Os valores ficam gravados (e não recalculados na hora de mostrar) para que uma
+    mudança futura na base TACO não altere o que o usuário já comeu.
+    """
+
+    __tablename__ = "itens_refeicao"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    refeicao_id: Mapped[int] = mapped_column(
+        ForeignKey("refeicoes.id", ondelete="CASCADE"), index=True
+    )
+    descricao: Mapped[str] = mapped_column(String(120))  # como o usuário falou ("um bife")
+    alimento_id: Mapped[int | None] = mapped_column(ForeignKey("alimentos.id"))  # None = estimativa da IA
+    alimento_nome: Mapped[str] = mapped_column(String(120))
+    quantidade: Mapped[float | None] = mapped_column(Float)
+    unidade: Mapped[str | None] = mapped_column(String(40))
+    tamanho: Mapped[str | None] = mapped_column(String(20))
+    gramas: Mapped[float] = mapped_column(Float)
+    kcal: Mapped[float] = mapped_column(Float)
+    proteina: Mapped[float] = mapped_column(Float)
+    carboidrato: Mapped[float] = mapped_column(Float)
+    gordura: Mapped[float] = mapped_column(Float)
+    fibra: Mapped[float] = mapped_column(Float)
+    estimado: Mapped[bool] = mapped_column(Boolean, default=False)  # RN02
+    confianca: Mapped[str] = mapped_column(String(8))  # alta, media ou baixa
+    origem: Mapped[str] = mapped_column(String(16))  # taco, derivado, manual ou ia (RF14)
+    explicacao: Mapped[str] = mapped_column(Text, default="")
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=agora, onupdate=agora
+    )
+
+    refeicao: Mapped[Refeicao] = relationship(back_populates="itens")

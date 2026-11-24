@@ -54,11 +54,13 @@ $("btn-novo").addEventListener("click", async () => {
   if (tel.length < 8 || tel.length > 15) return alert("Use de 8 a 15 dígitos.");
   await carregarUsuarios(tel);
   await carregarHistorico();
+  carregarBanco();
 });
 
 seletor.addEventListener("change", async () => {
   salvarPreferencia(telefoneAtual());
   await carregarHistorico();
+  carregarBanco();
 });
 
 $("btn-resetar").addEventListener("click", async () => {
@@ -67,6 +69,7 @@ $("btn-resetar").addEventListener("click", async () => {
   await fetch(`/simulador/usuarios/${tel}`, { method: "DELETE" });
   await carregarUsuarios(tel);
   await carregarHistorico();
+  carregarBanco();
 });
 
 // ---------- Conversa ----------
@@ -132,13 +135,24 @@ function rotuloDia(data) {
 }
 
 // Mesmas marcações do WhatsApp: *negrito*, _itálico_, ~riscado~.
+// Regra do WhatsApp: o texto "encosta" nos símbolos (sem espaço por dentro) e, por fora,
+// há começo/fim de linha, espaço ou pontuação. Assim "(~150 g), feijão (~140 g)" NÃO vira
+// riscado: o "~" ali significa "aproximadamente".
+function marcacao(simbolo, tag) {
+  const s = `\\${simbolo}`;
+  return [
+    new RegExp(`(^|[\\s(])${s}([^\\s${s}](?:[^${s}\\n]*[^\\s${s}])?)${s}(?=$|[\\s.,!?;:)])`, "gm"),
+    `$1<${tag}>$2</${tag}>`,
+  ];
+}
+
 function formatarWhatsApp(texto) {
   const seguro = texto
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return seguro
-    .replace(/\*([^*\n]+)\*/g, "<strong>$1</strong>")
-    .replace(/(^|\s)_([^_\n]+)_/g, "$1<em>$2</em>")
-    .replace(/~([^~\n]+)~/g, "<s>$1</s>")
+    .replace(...marcacao("*", "strong"))
+    .replace(...marcacao("_", "em"))
+    .replace(...marcacao("~", "s"))
     .replace(/\n/g, "<br>");
 }
 
@@ -196,14 +210,14 @@ async function enviar(texto, arquivo) {
   try {
     const resposta = await fetch("/simulador/mensagem", { method: "POST", body: dados });
     const json = await resposta.json();
-    $("json").textContent = JSON.stringify(json, null, 2);
     esconderDigitando();
     if (!resposta.ok) {
       desenharMensagem({ direcao: "saida", texto: `⚠️ Erro ${resposta.status}: ${json.detail}`,
         horario: new Date().toISOString() }, "erro");
     } else {
-      $("tempo").textContent = `${json.tempo_ms} ms`;
       desenharMensagem({ direcao: "saida", ...json.resposta });
+      mostrarDepuracao(json);
+      carregarBanco();
     }
   } catch (erro) {
     esconderDigitando();
@@ -283,10 +297,116 @@ function nomeDoAudio(mime) {
   return mime.includes("ogg") ? "gravacao.ogg" : "gravacao.webm";
 }
 
+// ---------- Painel: abas ----------
+
+for (const aba of document.querySelectorAll(".aba")) {
+  aba.addEventListener("click", () => {
+    for (const outra of document.querySelectorAll(".aba")) {
+      const ativa = outra === aba;
+      outra.classList.toggle("ativa", ativa);
+      outra.setAttribute("aria-selected", String(ativa));
+      $(`aba-${outra.dataset.aba}`).hidden = !ativa;
+    }
+    if (aba.dataset.aba === "banco") carregarBanco();
+  });
+}
+
+// ---------- Painel: depuração (RF30) ----------
+
+const fmtMs = (ms) => (ms >= 1000 ? `${(ms / 1000).toFixed(2)} s` : `${Math.round(ms)} ms`);
+const fmtJson = (obj) => JSON.stringify(obj, null, 2);
+
+function mostrarDepuracao(json) {
+  const d = json.depuracao || {};
+  $("dep-vazio").hidden = true;
+  $("dep-conteudo").hidden = false;
+
+  $("m-tempo").textContent = fmtMs(json.tempo_ms);
+  $("m-tempo-ia").textContent = d.tempo_ia_ms ? fmtMs(d.tempo_ia_ms) : "-";
+  $("m-custo").textContent = d.custo_usd ? `US$ ${d.custo_usd.toFixed(5)}` : "-";
+  $("m-chamadas").textContent = d.chamadas_ia ?? "-";
+  $("m-modelo").textContent = d.modelo ? `Modelo: ${d.modelo} · esforço: ${d.esforco ?? "padrão"}` : "IA não usada nesta mensagem";
+  const t = d.tokens || {};
+  $("m-tokens").textContent = d.chamadas_ia
+    ? `Tokens: ${t.entrada} entrada · ${t.cache_leitura} do cache · ${t.cache_escrita} gravados no cache · ${t.saida} saída`
+    : "";
+
+  const alerta = d.erro || d.aviso;
+  $("m-alerta").hidden = !alerta;
+  $("m-alerta").textContent = alerta || "";
+
+  const lista = $("m-ferramentas");
+  lista.innerHTML = "";
+  if (!d.ferramentas?.length) {
+    lista.innerHTML = '<p class="dica">Nenhuma nesta mensagem.</p>';
+  }
+  for (const f of d.ferramentas || []) {
+    const bloco = document.createElement("details");
+    bloco.className = `ferramenta ${f.erro ? "erro" : ""}`;
+    const titulo = document.createElement("summary");
+    titulo.textContent = `${f.erro ? "⚠️" : "🔧"} ${f.nome}`;
+    const args = document.createElement("pre");
+    args.className = "json";
+    args.textContent = `Argumentos (o que a IA pediu):\n${fmtJson(f.argumentos)}\n\nResultado (o que o código devolveu):\n${fmtJson(f.resultado)}`;
+    bloco.append(titulo, args);
+    lista.append(bloco);
+  }
+
+  $("m-contexto").textContent = d.contexto || "(sem contexto)";
+  $("m-etapas").textContent = (d.etapas || [])
+    .map((e) => `${e.etapa.padEnd(32)} ${fmtMs(e.ms).padStart(9)}${e.uso ? `  ${e.uso.entrada + e.uso.cache_leitura + e.uso.cache_escrita}→${e.uso.saida} tokens` : ""}`)
+    .join("\n") || "(nenhuma)";
+  $("json").textContent = fmtJson(json);
+}
+
+// ---------- Painel: banco (RF31) ----------
+
+async function carregarBanco() {
+  const { dias } = await (await fetch(`/simulador/banco/${telefoneAtual()}`)).json();
+  const alvo = $("banco");
+  alvo.innerHTML = "";
+  if (!dias.length) {
+    alvo.innerHTML = '<p class="dica">Nenhuma refeição gravada para este usuário.</p>';
+    return;
+  }
+  for (const dia of dias) {
+    const blocoDia = document.createElement("div");
+    blocoDia.className = "dia";
+    blocoDia.innerHTML = `<div class="dia-topo"><strong>${dia.data}</strong><span>${Math.round(dia.totais.kcal)} kcal</span></div>
+      <div class="macros">P ${dia.totais.proteina} g · C ${dia.totais.carboidrato} g · G ${dia.totais.gordura} g · fibra ${dia.totais.fibra} g</div>`;
+    for (const ref of dia.refeicoes) {
+      const blocoRef = document.createElement("div");
+      blocoRef.className = "refeicao";
+      blocoRef.innerHTML = `<div class="refeicao-topo"><span>${ref.tipo} · ${ref.hora}</span><span>${Math.round(ref.totais.kcal)} kcal</span></div>`;
+      for (const item of ref.itens) {
+        const linha = document.createElement("div");
+        linha.className = "item";
+        linha.title = item.explicacao; // passe o mouse para ver a conta
+        const selos = [
+          item.estimado ? '<span class="selo">estimado</span>' : "",
+          item.confianca === "baixa" ? '<span class="selo baixa">confiança baixa</span>' : "",
+          item.origem === "ia" ? '<span class="selo ia">valor da IA</span>' : "",
+        ].join("");
+        const nome = document.createElement("span");
+        nome.textContent = `${item.alimento_nome}`;
+        nome.insertAdjacentHTML("beforeend", selos);
+        const valores = document.createElement("span");
+        valores.className = "valores";
+        valores.textContent = `${item.estimado ? "~" : ""}${Math.round(item.gramas)} g · ${Math.round(item.kcal)} kcal`;
+        linha.append(nome, valores);
+        blocoRef.append(linha);
+      }
+      blocoDia.append(blocoRef);
+    }
+    alvo.append(blocoDia);
+  }
+}
+
 // ---------- Início ----------
 
 (async () => {
   await carregarUsuarios();
   await carregarHistorico();
+  carregarBanco();
   campoTexto.focus();
 })();

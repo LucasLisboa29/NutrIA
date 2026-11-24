@@ -5,12 +5,12 @@
 
 ## Agora
 
-- **Fase atual:** Fase 3, Agente v1 (texto) (não iniciada)
-- **Próximo passo:** criar a conta na Anthropic e pôr a `ANTHROPIC_API_KEY` no `.env`;
-  depois, a interface `ProvedorIA` em `app/ia/base.py`.
+- **Fase atual:** Fase 4, Perfil e metas (não iniciada)
+- **Próximo passo:** tabelas `perfis` e `historico_peso` e a ferramenta `atualizar_perfil`
+  (aceita dados parciais).
 - **A conferir pelo Lucas:** gravar um áudio pelo microfone no simulador (o teste
   automático não consegue usar o microfone).
-- **Bloqueios:** a Fase 3 precisa da API key da Anthropic (o Lucas cria a conta).
+- **Bloqueios:** nenhum.
 
 ## Status das fases
 
@@ -20,7 +20,7 @@
 | 0 — Fundação | ✅ Concluído |
 | 1 — Simulador | ✅ Concluído |
 | 2 — Base nutricional | ✅ Concluído |
-| 3 — Agente v1 (texto) | ⬜ Não iniciado |
+| 3 — Agente v1 (texto) | ✅ Concluído |
 | 4 — Perfil e metas | ⬜ Não iniciado |
 | 5 — Consultas e correções | ⬜ Não iniciado |
 | 6 — Foto e áudio | ⬜ Não iniciado |
@@ -49,6 +49,15 @@
 | 2026-11-24 | Leite integral/desnatado preenchidos à mão | A TACO marca esses valores com "*" (em reavaliação) |
 | 2026-11-24 | Busca: sinônimo primeiro, depois aproximada (RapidFuzz), preferindo o preparado ao cru | "arroz" deve virar arroz cozido, não cru |
 | 2026-11-24 | Porções com confiança alta/média/baixa e `explicacao` da conta | Base para RN02 (estimado visível) e para o painel de depuração |
+| 2026-11-24 | Laço de ferramentas próprio (não o tool runner beta do SDK) | Manter o núcleo independente do provedor (`ProvedorIA`) |
+| 2026-11-24 | Data/hora e registros de hoje vão num bloco `<contexto>` junto da mensagem, não no prompt do sistema | O prompt do sistema fica fixo e aproveita o cache |
+| 2026-11-24 | Histórico para a IA: últimas 12 mensagens (até 12 h), só texto | Contexto suficiente (RF04) sem custo crescente |
+| 2026-11-24 | Campo `null` em `atualizar_item` = "não mudou" | Modelos mandam null em tudo; não pode apagar a quantidade |
+| 2026-11-24 | Datas sempre em UTC no banco, inclusive as informadas ("ontem 20h") | O SQLite não guarda fuso; misturar daria comparações erradas |
+| 2026-11-24 | Testes usam uma IA falsa roteirizada (`tests/ia_falsa.py`) | Testes grátis, rápidos e repetíveis; a IA real é testada à parte |
+| 2026-11-24 | `tzdata` adicionado ao requirements | O Windows não traz a base de fusos (America/Sao_Paulo) |
+| 2026-11-24 | Cache: marca explícita no fim do prompt do sistema + cache automático | Só o automático não reaproveitava prompt+ferramentas entre mensagens (medido: custo caiu ~60%) |
+| 2026-11-24 | SDK da IA carregado ao ligar o servidor | A 1ª mensagem levava ~7 s por carregar o SDK |
 
 ## Diário de sessões
 
@@ -83,3 +92,25 @@
 - Achado: leite veio sem valores da TACO (marcado "*"); corrigido à mão e marcado.
 - 47 testes passando. Marco: `calcular("arroz", 2, "colher de servir")` = 90 g, 115 kcal.
 - A calibrar na Fase 7: PF sai ~630 kcal (provavelmente baixo; falta óleo do preparo).
+
+### 2026-11-24 — Sessão 2 (cont.): Fase 3, agente com IA
+- Camada de IA: `app/ia/base.py` (interface neutra), `claude.py` (SDK oficial, cache
+  automático, esforço), `roteador.py` (modelo/esforço/preço por rota em `config/modelos.yaml`).
+- Tabelas `refeicoes` e `itens_refeicao`; ferramentas `registrar_refeicao` (vários itens,
+  pratos compostos, RF14 com `estimativa_ia`, refeições passadas) e `atualizar_item` (RF11).
+- Orquestrador com laço de ferramentas (máx. 6 passos), histórico, `<contexto>` com data e
+  registros de hoje, e tratamento de falha da IA sem perder o que já foi gravado (RN01).
+- `config/prompt_sistema.md` escrito (registrar primeiro, perguntar com bom senso, estilo WhatsApp).
+- Telemetria (tempo, tokens, custo por etapa) e painel com abas Depuração e Banco.
+- 61 testes passando (14 novos do agente, com IA falsa). Falta o teste com a IA real.
+- **Teste com a IA real (Haiku 5.5, esforço low):** marco ok (3 itens, ~492 kcal, perguntou
+  do bife); "era grande" atualizou 100 → 140 g sem duplicar; "foi um copo de leite"
+  corrigiu o item certo; "quanto comi hoje?" respondeu certo pelo contexto.
+- **Números reais:** ~1,9–2,6 s por mensagem (sem contar a 1ª), US$ 0,0004–0,001 por
+  mensagem (< R$ 0,01). Cache lendo ~3.400 tokens por chamada depois do ajuste.
+- Corrigido: o simulador riscava texto entre dois "~" ("~150 g ... ~140 g"); agora segue
+  a regra do WhatsApp.
+- **Anotado para a calibragem (Fase 7):** a ferramenta `registrar_refeicao` leva ~250 ms
+  (a busca aproximada lê os 600 alimentos a cada item); o histórico perde o cache das
+  mensagens porque o `<contexto>` só vai na mensagem atual; o bot às vezes faz 2 perguntas
+  de uma vez; ele preencheu "08:00" num café da manhã contado à noite (razoável, mas observar).

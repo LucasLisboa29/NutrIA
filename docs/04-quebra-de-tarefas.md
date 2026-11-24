@@ -87,22 +87,22 @@ NutrIA/
 
 ## Fase 3 — Agente v1 (texto)
 
-- [ ] Criar conta na Anthropic e gerar a API key (colocar no `.env`) · P
-- [ ] `ia/base.py`: interface `ProvedorIA` (mensagens + ferramentas → resposta + chamadas de ferramenta + uso de tokens) · M
-- [ ] `ia/claude.py`: adaptador com o SDK oficial `anthropic` · M
-- [ ] `ia/roteador.py` + `config/modelos.yaml`: modelo e esforço por rota · P
-- [ ] `config/prompt_sistema.md`: personalidade, regras de estimativa, como e quando perguntar [RF05, RN01–RN03] · M
-- [ ] Tabelas `refeicoes` e `itens_refeicao` (gramas, kcal, macros, `estimado`, `confianca`, `origem`) · P
-- [ ] Ferramenta `registrar_refeicao` (vários itens de uma vez; usa o módulo de nutrição) [RF07–RF10] · G
-- [ ] Ferramenta `atualizar_item` (resposta a uma pergunta, como "era grande") [RF11] · M
-- [ ] Item não encontrado na TACO → estimativa da IA marcada como baixa confiança [RF14] · P
-- [ ] Orquestrador real: laço de chamada de ferramentas com histórico recente [RF04] · G
-- [ ] Cache de prompt no prompt do sistema e nas ferramentas · P
-- [ ] `telemetria.py`: tempo por etapa, tokens e custo por mensagem · M
-- [ ] Painel de depuração no simulador: intenção, ferramentas chamadas, dados gravados, tokens, custo e tempo [RF30] · G
-- [ ] Recarregar prompt e config sem reiniciar o servidor [RF35] · P
-- [ ] Aba "banco" no simulador: refeições e totais do usuário [RF31] · M
-- [ ] Marco: "almocei arroz, feijão e um bife" grava 3 itens, e o painel mostra custo e tempo · P
+- [x] Criar conta na Anthropic e gerar a API key (colocar no `.env`) · P
+- [x] `ia/base.py`: interface `ProvedorIA` (mensagens + ferramentas → resposta + chamadas de ferramenta + uso de tokens) · M
+- [x] `ia/claude.py`: adaptador com o SDK oficial `anthropic` · M
+- [x] `ia/roteador.py` + `config/modelos.yaml`: modelo e esforço por rota · P
+- [x] `config/prompt_sistema.md`: personalidade, regras de estimativa, como e quando perguntar [RF05, RN01–RN03] · M
+- [x] Tabelas `refeicoes` e `itens_refeicao` (gramas, kcal, macros, `estimado`, `confianca`, `origem`) · P
+- [x] Ferramenta `registrar_refeicao` (vários itens de uma vez; usa o módulo de nutrição) [RF07–RF10] · G
+- [x] Ferramenta `atualizar_item` (resposta a uma pergunta, como "era grande") [RF11] · M
+- [x] Item não encontrado na TACO → estimativa da IA marcada como baixa confiança [RF14] · P
+- [x] Orquestrador real: laço de chamada de ferramentas com histórico recente [RF04] · G
+- [x] Cache de prompt no prompt do sistema e nas ferramentas · P
+- [x] `telemetria.py`: tempo por etapa, tokens e custo por mensagem · M
+- [x] Painel de depuração no simulador: intenção, ferramentas chamadas, dados gravados, tokens, custo e tempo [RF30] · G
+- [x] Recarregar prompt e config sem reiniciar o servidor [RF35] · P
+- [x] Aba "banco" no simulador: refeições e totais do usuário [RF31] · M
+- [x] Marco: "almocei arroz, feijão e um bife" grava 3 itens, e o painel mostra custo e tempo · P
 
 ## Fase 4 — Perfil e metas
 

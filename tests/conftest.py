@@ -12,6 +12,9 @@ from pathlib import Path
 _PASTA_TESTE = Path(tempfile.mkdtemp(prefix="nutria_teste_"))
 os.environ["DATABASE_URL"] = f"sqlite:///{_PASTA_TESTE / 'teste.db'}"
 os.environ["PASTA_UPLOADS"] = str(_PASTA_TESTE / "uploads")
+# Os testes nunca chamam a IA de verdade (custa dinheiro e depende da internet).
+# Quem precisa de IA usa a fixture `ia_falsa`, que responde com um roteiro.
+os.environ["ANTHROPIC_API_KEY"] = ""
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -39,3 +42,15 @@ def db():
     with SessaoLocal() as sessao:
         garantir_base(sessao)
         yield sessao
+
+
+@pytest.fixture
+def ia_falsa():
+    """Troca a IA de verdade por uma de mentira, roteirizada pelo teste."""
+    from app.ia import roteador
+    from tests.ia_falsa import IAFalsa
+
+    falsa = IAFalsa()
+    roteador.registrar_provedor("claude", falsa)
+    yield falsa
+    roteador._provedores.pop("claude", None)

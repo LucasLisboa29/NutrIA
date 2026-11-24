@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.banco.sessao import SessaoLocal, criar_tabelas, get_db
 from app.canais import simulador
 from app.config import RAIZ
+from app.ia import roteador
 from app.nutricao import importar_taco
 
 
@@ -26,6 +27,9 @@ async def ciclo_de_vida(app: FastAPI) -> AsyncIterator[None]:
     criar_tabelas()
     with SessaoLocal() as db:
         importar_taco.garantir_base(db)  # carrega a TACO na 1ª vez
+    if roteador.ia_configurada():
+        # Carrega o SDK da IA agora, e não na 1ª mensagem (que ficaria uns segundos mais lenta).
+        roteador.provedor(roteador.rota("dia_a_dia").provedor)
     yield
 
 

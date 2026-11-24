@@ -5,6 +5,20 @@ Brasília acontece só na hora de mostrar ou de calcular "hoje" (RN04, Fase 5).
 """
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
+from app.config import settings
+
+DIAS_DA_SEMANA = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"]
+
+
+def fuso_local() -> ZoneInfo:
+    return ZoneInfo(settings.timezone)
+
+
+def para_local(momento: datetime) -> datetime:
+    """UTC do banco -> horário de Brasília, para mostrar e para saber o que é "hoje"."""
+    return como_utc(momento).astimezone(fuso_local())
 
 
 def agora() -> datetime:

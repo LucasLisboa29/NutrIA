@@ -11,6 +11,7 @@ SQLAlchemy==2.1.9
 # Configuração
 pydantic-settings==2.16.3   # lê o .env
 PyYAML==6.0.4               # lê config/*.yaml
+tzdata==2026.6              # fusos horários (o Windows não traz; usado para o horário de Brasília)
 
 # Nutrição
 RapidFuzz==3.14.6           # busca aproximada de nomes de alimentos (Fase 2)

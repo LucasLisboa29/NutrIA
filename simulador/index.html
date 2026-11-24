@@ -51,10 +51,43 @@
       </section>
 
       <section>
-        <h2>Última resposta</h2>
-        <p>Tempo no servidor: <strong id="tempo">-</strong></p>
-        <pre id="json" class="json">Mande uma mensagem para ver o JSON aqui.</pre>
-        <p class="dica">Na Fase 3 este painel vai mostrar as ferramentas chamadas, os dados gravados, tokens e custo.</p>
+        <div class="abas" role="tablist">
+          <button type="button" role="tab" class="aba ativa" data-aba="depuracao" aria-selected="true">Depuração</button>
+          <button type="button" role="tab" class="aba" data-aba="banco" aria-selected="false">Banco</button>
+        </div>
+
+        <div id="aba-depuracao" role="tabpanel">
+          <p id="dep-vazio" class="dica">Mande uma mensagem para ver o que a IA fez.</p>
+          <div id="dep-conteudo" hidden>
+            <div class="metricas">
+              <div><span>Tempo total</span><strong id="m-tempo">-</strong></div>
+              <div><span>Tempo de IA</span><strong id="m-tempo-ia">-</strong></div>
+              <div><span>Custo</span><strong id="m-custo">-</strong></div>
+              <div><span>Chamadas à IA</span><strong id="m-chamadas">-</strong></div>
+            </div>
+            <p class="linha-info" id="m-modelo"></p>
+            <p class="linha-info" id="m-tokens"></p>
+            <p id="m-alerta" class="alerta" hidden></p>
+            <h3>Ferramentas chamadas</h3>
+            <div id="m-ferramentas"></div>
+            <details>
+              <summary>Contexto enviado à IA</summary>
+              <pre id="m-contexto" class="json"></pre>
+            </details>
+            <details>
+              <summary>Etapas (tempo de cada uma)</summary>
+              <pre id="m-etapas" class="json"></pre>
+            </details>
+            <details>
+              <summary>JSON completo da resposta</summary>
+              <pre id="json" class="json"></pre>
+            </details>
+          </div>
+        </div>
+
+        <div id="aba-banco" role="tabpanel" hidden>
+          <div id="banco"></div>
+        </div>
       </section>
     </aside>
   </main>

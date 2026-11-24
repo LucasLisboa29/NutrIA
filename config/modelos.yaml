@@ -1,24 +1,40 @@
 # Modelo de IA e nível de esforço por "rota" (tipo de tarefa).
-# Ponto de partida — será calibrado com números na Fase 7.
+# Ponto de partida, a calibrar com números na Fase 7. Editável com o servidor ligado.
 # Trocar o provedor aqui não deve exigir mudança no núcleo (interface ProvedorIA).
+#
+# esforco: quanto o modelo "pensa" antes de responder (low, medium, high...).
+#   Mais esforço = respostas mais cuidadosas, porém mais lentas e caras.
+# max_tokens: limite do tamanho da resposta (inclui o raciocínio interno do modelo).
 
 rotas:
   dia_a_dia:            # registrar, corrigir, consultar
     provedor: claude
     modelo: claude-haiku-5-5
     esforco: low
-  visao:                # foto do prato
+    max_tokens: 4000
+  visao:                # foto do prato (Fase 6)
     provedor: claude
     modelo: claude-sonnet-5-5
     esforco: medium
+    max_tokens: 6000
   dificil:              # conversas ambíguas / complexas
     provedor: claude
     modelo: claude-sonnet-5-5
     esforco: medium
+    max_tokens: 6000
   referencia:           # só para comparação nos testes
     provedor: claude
     modelo: claude-opus-5-5
     esforco: medium
+    max_tokens: 8000
+
+# Preço em dólares por 1 milhão de tokens (para calcular o custo de cada mensagem).
+# Conferir de tempos em tempos em https://www.anthropic.com/pricing
+# cache_leitura e cache_escrita são multiplicadores sobre o preço de entrada.
+precos:
+  claude-haiku-5-5:     {entrada: 0.10, saida: 0.50, cache_leitura: 0.10, cache_escrita: 1.25}
+  claude-sonnet-5-5:    {entrada: 2.00, saida: 10.00, cache_leitura: 0.05, cache_escrita: 1.25}
+  claude-opus-5-5:      {entrada: 4.00, saida: 20.00, cache_leitura: 0.05, cache_escrita: 1.25}
 
 transcricao:
   provedor: groq

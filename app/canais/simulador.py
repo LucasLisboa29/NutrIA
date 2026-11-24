@@ -15,8 +15,8 @@ from sqlalchemy.orm import Session
 from app.banco.modelos import Mensagem
 from app.banco.sessao import get_db
 from app.canais.base import MensagemEntrada, MensagemSaida, Midia, TipoMidia
-from app.nucleo import historico, orquestrador
-from app.tempo import como_utc
+from app.nucleo import historico, orquestrador, registros
+from app.tempo import como_utc, para_local
 
 TAMANHO_MAXIMO = 16 * 1024 * 1024  # 16 MB, o mesmo limite de áudio do WhatsApp
 
@@ -54,10 +54,11 @@ def receber_mensagem(
     """O usuário de teste mandou uma mensagem (texto, foto ou áudio)."""
     inicio = time.perf_counter()
     entrada = adaptador.para_entrada(_validar_telefone(telefone), texto, arquivo)
-    saida = orquestrador.processar(db, entrada)
+    resultado = orquestrador.processar(db, entrada)
     return {
-        "resposta": adaptador.responder(saida),
+        "resposta": adaptador.responder(resultado.saida),
         "tempo_ms": round((time.perf_counter() - inicio) * 1000, 1),
+        "depuracao": resultado.depuracao,  # painel de depuração (RF30)
     }
 
 
@@ -75,6 +76,40 @@ def ver_historico(telefone: str, db: Session = Depends(get_db)) -> list[dict]:
     if usuario is None:
         return []
     return [_serializar(m) for m in historico.listar_mensagens(db, usuario)]
+
+
+@router.get("/banco/{telefone}")
+def ver_banco(telefone: str, db: Session = Depends(get_db)) -> dict:
+    """Refeições gravadas do usuário, agrupadas por dia (mais recente primeiro), com totais (RF31)."""
+    usuario = historico.buscar_usuario(db, _validar_telefone(telefone))
+    if usuario is None:
+        return {"dias": []}
+
+    dias: dict[str, dict] = {}
+    itens_por_dia: dict[str, list] = {}
+    for refeicao in sorted(usuario.refeicoes, key=lambda r: r.data_hora, reverse=True):
+        local = para_local(refeicao.data_hora)
+        data = local.strftime("%d/%m/%Y")
+        dias.setdefault(data, {"data": data, "refeicoes": []})
+        itens_por_dia.setdefault(data, []).extend(refeicao.itens)
+        dias[data]["refeicoes"].append(
+            {
+                "id": refeicao.id,
+                "tipo": registros.TIPOS.get(refeicao.tipo, refeicao.tipo),
+                "hora": local.strftime("%H:%M"),
+                "totais": registros.totais(refeicao.itens),
+                "itens": [_serializar_item(i) for i in refeicao.itens],
+            }
+        )
+    for data, dia in dias.items():
+        dia["totais"] = registros.totais(itens_por_dia[data])
+    return {"dias": list(dias.values())}
+
+
+def _serializar_item(item) -> dict:
+    campos = ("id", "descricao", "alimento_nome", "gramas", "kcal", "proteina", "carboidrato",
+              "gordura", "estimado", "confianca", "origem", "explicacao")
+    return {campo: getattr(item, campo) for campo in campos}
 
 
 @router.delete("/usuarios/{telefone}")
