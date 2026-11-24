@@ -1,0 +1,281 @@
+# Medidas caseiras -> gramas (RF08, RF09).
+#
+# Os valores são referências aproximadas de tabelas de medidas caseiras brasileiras e
+# vão ser calibrados nos testes (Fase 7). Editável com o servidor ligado (RF35).
+#
+# Como o código procura a medida de um item:
+#   1. em `alimentos:`, a medida específica daquele alimento (1 concha de feijão);
+#   2. em `medidas:`, a medida genérica (1 concha de qualquer coisa);
+#   3. se a medida for desconhecida, usa a porção padrão do alimento e marca como estimado.
+# Sem quantidade nenhuma ("comi arroz"), usa `padrao` do alimento (ou `padrao_geral`).
+
+padrao_geral: 100  # gramas, para alimentos sem porção padrão própria
+
+# Multiplicadores de tamanho: "concha grande", "prato cheio", "colher rasa".
+tamanhos:
+  pequeno: 0.7
+  medio: 1.0
+  grande: 1.4
+  cheio: 1.3
+  raso: 0.7
+  generoso: 1.3
+  meio: 0.5
+
+# Outros nomes para a mesma medida (já no singular e sem acento).
+apelidos_unidade:
+  g: [grama, gr, gramas]
+  kg: [quilo, kilo]
+  ml: [mililitro]
+  l: [litro]
+  colher de sopa: [colher sopa, cs, colher grande, colherada]
+  colher de cha: [colher cha, colher pequena, colherzinha, cc]
+  colher de sobremesa: [colher sobremesa]
+  colher de servir: [colher de arroz, colher servir]
+  concha: [conchinha]
+  escumadeira: []
+  xicara: [xicara de cha, xicrinha]
+  copo: [copo de requeijao, copo medio]
+  copo americano: [copo pequeno, copinho]
+  lata: [latinha]
+  long neck: [longneck]
+  garrafa: []
+  fatia: [rodela, tira]
+  pedaco: [pedacinho, naco, porcaozinha]
+  unidade: [un, und, inteiro]
+  prato: [prato raso]
+  porcao: [porcao media]
+  bife: [file]
+  pote: [potinho]
+  folha: []
+  quadrado: [quadradinho]
+  barra: [barrinha]
+  sache: [saquinho, envelope]
+  ponta de faca: []
+
+# Medidas genéricas, em gramas (ou ml, considerando 1 ml ~ 1 g).
+medidas:
+  g: 1
+  kg: 1000
+  ml: 1
+  l: 1000
+  colher de cha: 5
+  colher de sobremesa: 10
+  colher de sopa: 15
+  colher de servir: 45
+  concha: 100
+  escumadeira: 90
+  xicara: 240
+  copo: 200
+  copo americano: 190
+  lata: 350
+  long neck: 355
+  garrafa: 600
+  fatia: 30
+  pedaco: 50
+  unidade: 100
+  prato: 300
+  porcao: 100
+  bife: 100
+  pote: 170
+  folha: 10
+  quadrado: 5
+  barra: 25
+  sache: 5
+  ponta de faca: 5
+
+# Medidas específicas por alimento. A chave é o nome na base e aceita * como curinga
+# ("Feijão, *, cozido" vale para todos os feijões cozidos). Vale a primeira que bater.
+alimentos:
+  "Arroz, *, cozido":
+    padrao: 150
+    colher de sopa: 25
+    colher de servir: 45
+    escumadeira: 90
+    xicara: 160
+    prato: 250
+  "Arroz carreteiro":
+    padrao: 200
+  "Macarrão, trigo, cozido":
+    padrao: 200
+    pegador: 110
+    escumadeira: 110
+    prato: 300
+  "Macarrão, instantâneo":
+    padrao: 85
+    unidade: 85
+    pacote: 85
+  "Feijão, *, cozido":
+    padrao: 140
+    concha: 140
+    colher de sopa: 20
+    colher de servir: 45
+  "Feijoada":
+    padrao: 250
+    concha: 180
+  "Feijão tropeiro mineiro":
+    padrao: 100
+    colher de sopa: 25
+  "Estrogonofe de *":
+    padrao: 180
+    concha: 130
+    colher de servir: 60
+  "Carne, bovina, *":
+    padrao: 100
+    bife: 100
+    fatia: 80
+    pedaco: 50
+    unidade: 100
+  "Frango, *":
+    padrao: 100
+    file: 100
+    bife: 100
+    pedaco: 80
+    unidade: 100
+  "Hambúrguer, bovino, *":
+    padrao: 90
+    unidade: 90
+  "Ovo, de galinha, inteiro, *":
+    padrao: 50
+    unidade: 50
+  "Omelete, de queijo":
+    padrao: 100
+    unidade: 100
+  "Pão, trigo, francês":
+    padrao: 50
+    unidade: 50
+    fatia: 25
+  "Pão, *, forma*":
+    padrao: 50
+    fatia: 25
+    unidade: 25
+  "Pão, de queijo, assado":
+    padrao: 40
+    unidade: 20
+  "Pão, hambúrguer":
+    padrao: 70
+    unidade: 70
+  "Torrada, pão francês":
+    padrao: 15
+    unidade: 5
+    fatia: 5
+  "Banana, *, crua":
+    padrao: 70
+    unidade: 70
+  "Maçã, *":
+    padrao: 130
+    unidade: 130
+  "Laranja, *, crua":
+    padrao: 140
+    unidade: 140
+  "Laranja, *, suco":
+    padrao: 200
+  "Mamão, *":
+    padrao: 170
+    fatia: 170
+  "Leite, de vaca, *":
+    padrao: 200
+  "Café, infusão 10%":
+    padrao: 50
+    xicara: 50
+    xicara de cafe: 50
+    copo americano: 100
+  "Açúcar, *":
+    padrao: 5
+    colher de cha: 5
+    colher de sopa: 12
+    sache: 5
+  "Mel, de abelha":
+    padrao: 15
+    colher de sopa: 20
+    colher de cha: 7
+  "Queijo, requeijão, cremoso":
+    padrao: 15
+    colher de sopa: 15
+    ponta de faca: 10
+  "Queijo, *":
+    padrao: 30
+    fatia: 20
+  "Presunto, *":
+    padrao: 30
+    fatia: 15
+  "Mortadela":
+    padrao: 30
+    fatia: 15
+  "Manteiga, *":
+    padrao: 10
+    colher de sopa: 10
+    colher de cha: 5
+    ponta de faca: 5
+  "Margarina, *":
+    padrao: 10
+    colher de sopa: 10
+    colher de cha: 5
+    ponta de faca: 5
+  "Azeite, *":
+    padrao: 8
+    colher de sopa: 8
+    colher de cha: 3
+    fio: 5
+  "Óleo, *":
+    padrao: 8
+    colher de sopa: 8
+    colher de cha: 3
+  "Maionese, *":
+    padrao: 15
+    colher de sopa: 15
+  "Batata, inglesa, frita":
+    padrao: 100
+    porcao: 100
+  "Batata, *, cozida":
+    padrao: 130
+    unidade: 130
+  "Mandioca, farofa, temperada":
+    padrao: 30
+    colher de sopa: 15
+  "Mandioca, *":
+    padrao: 100
+    pedaco: 60
+  "Alface, *":
+    padrao: 30
+    folha: 8
+    prato: 50
+  "Tomate, com semente, cru":
+    padrao: 50
+    unidade: 100
+    fatia: 15
+  "Cuscuz, *":
+    padrao: 150
+    fatia: 135
+  "Tapioca, com manteiga":
+    padrao: 100
+    unidade: 100
+  "Pizza, *":
+    padrao: 220
+    fatia: 110
+    pedaco: 110
+  "Coxinha de frango, frita":
+    padrao: 80
+    unidade: 80
+  "Pastel, *, frito":
+    padrao: 80
+    unidade: 80
+  "Refrigerante, *":
+    padrao: 200
+  "Cerveja, *":
+    padrao: 350
+    copo: 300
+  "Iogurte, *":
+    padrao: 170
+    pote: 170
+  "Chocolate, *":
+    padrao: 25
+    barra: 25
+    quadrado: 5
+    unidade: 25
+  "Biscoito, *":
+    padrao: 30
+    unidade: 8
+    pacote: 130
+  "Aveia, flocos, crua":
+    padrao: 30
+    colher de sopa: 10

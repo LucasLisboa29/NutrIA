@@ -75,15 +75,15 @@ NutrIA/
 
 ## Fase 2 — Base nutricional
 
-- [ ] Obter a Tabela TACO (4ª edição, NEPA/Unicamp) e salvar em `dados/` · P
-- [ ] Script de importação: limpar colunas (kcal, proteína, carboidrato, gordura, fibra por 100g) → tabela `alimentos` · M
-- [ ] Busca por nome tolerante (sem acento, minúsculas, sinônimos, aproximação com `rapidfuzz`) · M
-- [ ] Tabela de sinônimos populares ("pão francês" = "pão de sal", "aipim" = "mandioca") · M
-- [ ] `config/porcoes.yaml`: medidas caseiras e porção padrão por alimento (concha, colher de sopa/servir, fatia, unidade, copo, prato) · M
-- [ ] `calculo.py`: (alimento, quantidade, unidade) → gramas, kcal e macros · P
-- [ ] Tabela de pratos compostos (PF, strogonoff, feijoada) com ingredientes típicos [RF13] · M
-- [ ] Testes com pytest para busca, porções e cálculo · M
-- [ ] Marco: `calcular("arroz", 2, "colher de servir")` correto, sem IA · P
+- [x] Obter a Tabela TACO (4ª edição, NEPA/Unicamp) e salvar em `dados/` · P
+- [x] Script de importação: limpar colunas (kcal, proteína, carboidrato, gordura, fibra por 100g) → tabela `alimentos` · M
+- [x] Busca por nome tolerante (sem acento, minúsculas, sinônimos, aproximação com `rapidfuzz`) · M
+- [x] Tabela de sinônimos populares ("pão francês" = "pão de sal", "aipim" = "mandioca") · M
+- [x] `config/porcoes.yaml`: medidas caseiras e porção padrão por alimento (concha, colher de sopa/servir, fatia, unidade, copo, prato) · M
+- [x] `calculo.py`: (alimento, quantidade, unidade) → gramas, kcal e macros · P
+- [x] Tabela de pratos compostos (PF, strogonoff, feijoada) com ingredientes típicos [RF13] · M
+- [x] Testes com pytest para busca, porções e cálculo · M
+- [x] Marco: `calcular("arroz", 2, "colher de servir")` correto, sem IA · P
 
 ## Fase 3 — Agente v1 (texto)
 

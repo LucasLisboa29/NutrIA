@@ -14,15 +14,18 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.banco.sessao import criar_tabelas, get_db
+from app.banco.sessao import SessaoLocal, criar_tabelas, get_db
 from app.canais import simulador
 from app.config import RAIZ
+from app.nutricao import importar_taco
 
 
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI) -> AsyncIterator[None]:
     """Roda uma vez ao ligar o servidor (antes do yield) e uma vez ao desligar (depois)."""
     criar_tabelas()
+    with SessaoLocal() as db:
+        importar_taco.garantir_base(db)  # carrega a TACO na 1ª vez
     yield
 
 

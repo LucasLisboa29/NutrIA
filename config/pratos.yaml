@@ -1,0 +1,57 @@
+# Pratos compostos (RF13): pratos que a TACO não tem prontos são decompostos nos
+# ingredientes típicos, um item por ingrediente (assim dá para corrigir "sem batata").
+#
+# Pratos que a TACO já tem prontos (feijoada, estrogonofe, coxinha) não ficam aqui:
+# estão em `sinonimos.yaml` e usam o valor do prato pronto.
+#
+# `gramas` é a quantidade de cada ingrediente em UMA porção normal do prato.
+# Editável com o servidor ligado (RF35).
+
+prato feito:
+  apelidos: [pf, prato comercial, prato executivo, marmita, marmitex, comercial]
+  ingredientes:
+    - {alimento: "Arroz, tipo 1, cozido", gramas: 150}
+    - {alimento: "Feijão, carioca, cozido", gramas: 100}
+    - {alimento: "Carne, bovina, contra-filé, sem gordura, grelhado", gramas: 100}
+    - {alimento: "Batata, inglesa, frita", gramas: 60}
+    - {alimento: "Alface, crespa, crua", gramas: 20}
+    - {alimento: "Tomate, com semente, cru", gramas: 30}
+
+x-tudo:
+  apelidos: [xis tudo, x tudo, xtudo, cheese tudo]
+  ingredientes:
+    - {alimento: "Pão, hambúrguer", gramas: 70}
+    - {alimento: "Hambúrguer, bovino, frito", gramas: 90}
+    - {alimento: "Ovo, de galinha, inteiro, frito", gramas: 50}
+    - {alimento: "Queijo, mozarela", gramas: 20}
+    - {alimento: "Presunto, sem capa de gordura", gramas: 15}
+    - {alimento: "Alface, crespa, crua", gramas: 10}
+    - {alimento: "Tomate, com semente, cru", gramas: 20}
+    - {alimento: "Maionese, tradicional com ovos", gramas: 15}
+
+x-burguer:
+  apelidos: [xis burguer, x burguer, cheeseburguer, cheeseburger, x-burger, hamburguer completo]
+  ingredientes:
+    - {alimento: "Pão, hambúrguer", gramas: 70}
+    - {alimento: "Hambúrguer, bovino, frito", gramas: 90}
+    - {alimento: "Queijo, mozarela", gramas: 20}
+
+misto quente:
+  apelidos: [misto, queijo quente com presunto]
+  ingredientes:
+    - {alimento: "Pão, trigo, forma, integral", gramas: 50}
+    - {alimento: "Queijo, mozarela", gramas: 20}
+    - {alimento: "Presunto, sem capa de gordura", gramas: 15}
+    - {alimento: "Manteiga, com sal", gramas: 5}
+
+pao com manteiga:
+  apelidos: [pao na chapa, pao francês com manteiga]
+  ingredientes:
+    - {alimento: "Pão, trigo, francês", gramas: 50}
+    - {alimento: "Manteiga, com sal", gramas: 5}
+
+cafe com leite:
+  apelidos: [pingado, media]
+  ingredientes:
+    - {alimento: "Café, infusão 10%", gramas: 100}
+    - {alimento: "Leite, de vaca, integral", gramas: 100}

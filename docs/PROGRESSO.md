@@ -5,12 +5,12 @@
 
 ## Agora
 
-- **Fase atual:** Fase 2, Base nutricional (não iniciada)
-- **Próximo passo:** obter a Tabela TACO (4ª edição, NEPA/Unicamp), salvar em `dados/` e
-  escrever o script de importação para a tabela `alimentos`.
+- **Fase atual:** Fase 3, Agente v1 (texto) (não iniciada)
+- **Próximo passo:** criar a conta na Anthropic e pôr a `ANTHROPIC_API_KEY` no `.env`;
+  depois, a interface `ProvedorIA` em `app/ia/base.py`.
 - **A conferir pelo Lucas:** gravar um áudio pelo microfone no simulador (o teste
   automático não consegue usar o microfone).
-- **Bloqueios:** nenhum. A API key da Anthropic só será necessária na Fase 3.
+- **Bloqueios:** a Fase 3 precisa da API key da Anthropic (o Lucas cria a conta).
 
 ## Status das fases
 
@@ -19,7 +19,7 @@
 | Planejamento (docs 01–04) | ✅ Concluído |
 | 0 — Fundação | ✅ Concluído |
 | 1 — Simulador | ✅ Concluído |
-| 2 — Base nutricional | ⬜ Não iniciado |
+| 2 — Base nutricional | ✅ Concluído |
 | 3 — Agente v1 (texto) | ⬜ Não iniciado |
 | 4 — Perfil e metas | ⬜ Não iniciado |
 | 5 — Consultas e correções | ⬜ Não iniciado |
@@ -42,6 +42,13 @@
 | 2026-11-21 | Histórico e mídias gravados pelo núcleo (`app/nucleo/historico.py`), não pelo canal | Todo canal grava igual; o WhatsApp reaproveita |
 | 2026-11-21 | Mídias em `uploads/<id do usuário>/`, datas em UTC no banco | Telefone fora dos nomes de arquivo (LGPD); fuso só na exibição |
 | 2026-11-21 | Testes usam banco e uploads temporários (`tests/conftest.py`) | Nunca mexer no `nutria.db` de desenvolvimento |
+| 2026-11-24 | Modo aprendizado como padrão; material de estudo em `Conteudo adicional/` | O Lucas usa o projeto para aprender IA |
+| 2026-11-24 | Todo commit é seguido de push automático | Pedido do Lucas |
+| 2026-11-24 | TACO em CSV do projeto raulfdm/taco-api (MIT), importada ao ligar o servidor | Planilha original já limpa; fonte citada em `dados/taco/LEIAME.md` |
+| 2026-11-24 | Alimentos fora da TACO e correções em `dados/alimentos_extras.yaml`, com origem `derivado`/`manual` | Sempre dá para saber se um número é oficial ou nosso |
+| 2026-11-24 | Leite integral/desnatado preenchidos à mão | A TACO marca esses valores com "*" (em reavaliação) |
+| 2026-11-24 | Busca: sinônimo primeiro, depois aproximada (RapidFuzz), preferindo o preparado ao cru | "arroz" deve virar arroz cozido, não cru |
+| 2026-11-24 | Porções com confiança alta/média/baixa e `explicacao` da conta | Base para RN02 (estimado visível) e para o painel de depuração |
 
 ## Diário de sessões
 
@@ -65,3 +72,14 @@
 - Tela estilo WhatsApp em `simulador/` (balões, horário, "digitando...", foto, gravação de
   áudio, seletor de telefone, resetar, painel com o JSON e o tempo da última resposta).
 - 10 testes passando. Marco conferido no navegador: 2 usuários com históricos separados.
+
+### 2026-11-24 — Sessão 2: Fase 2, base nutricional
+- Tabela `alimentos` com a TACO (597) + 3 extras (macarrão cozido, pizza, pão de hambúrguer);
+  importação automática ao ligar o servidor ou via `python -m app.nutricao.importar_taco`.
+- Busca tolerante (`app/nutricao/taco.py`): sinônimos em `config/sinonimos.yaml`, plural,
+  acento, erro de digitação, preferência pelo preparado.
+- Medidas caseiras (`config/porcoes.yaml` + `app/nutricao/porcoes.py`) e cálculo
+  (`app/nutricao/calculo.py`); pratos compostos em `config/pratos.yaml`.
+- Achado: leite veio sem valores da TACO (marcado "*"); corrigido à mão e marcado.
+- 47 testes passando. Marco: `calcular("arroz", 2, "colher de servir")` = 90 g, 115 kcal.
+- A calibrar na Fase 7: PF sai ~630 kcal (provavelmente baixo; falta óleo do preparo).

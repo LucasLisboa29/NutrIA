@@ -1,0 +1,58 @@
+# Complementos à Tabela TACO.
+#
+# novos: alimentos que a TACO não tem, mas que aparecem muito nas conversas.
+#   - "derivado": calculado a partir de um alimento da TACO, multiplicando todos os
+#     nutrientes por um fator. Ex.: o macarrão absorve água ao cozinhar e fica ~2,4 vezes
+#     mais pesado, então 100 g cozido têm ~42% dos nutrientes de 100 g cru.
+#   - "manual": valores por 100 g digitados por nós (média de rótulos e tabelas de
+#     referência). São aproximados: revisar com a TBCA/USP na calibragem (Fase 7).
+#   Os ids começam em 10001 para nunca colidir com os ids oficiais da TACO.
+#
+# correcoes: alimentos da TACO que vieram SEM valor (a planilha original marca com "*",
+#   "amostras sendo reavaliadas"). Preenchemos com valores de referência e a origem
+#   passa a ser "manual", para ficar claro que não é número oficial da TACO.
+
+novos:
+  - id: 10001
+    nome: "Macarrão, trigo, cozido"
+    categoria: "Cereais e derivados"
+    origem: derivado
+    base: "Macarrão, trigo, cru"
+    fator: 0.42
+
+  - id: 10002
+    nome: "Pizza, muçarela"
+    categoria: "Alimentos preparados"
+    origem: manual
+    kcal: 266
+    proteina: 11.4
+    carboidrato: 33.0
+    gordura: 9.7
+    fibra: 2.3
+    sodio: 600
+
+  - id: 10003
+    nome: "Pão, hambúrguer"
+    categoria: "Cereais e derivados"
+    origem: manual
+    kcal: 280
+    proteina: 9.0
+    carboidrato: 50.0
+    gordura: 4.5
+    fibra: 2.5
+    sodio: 480
+
+correcoes:
+  - nome: "Leite, de vaca, integral"
+    kcal: 61
+    proteina: 3.1
+    carboidrato: 4.7
+    gordura: 3.3
+    fibra: 0
+
+  - nome: "Leite, de vaca, desnatado, UHT"
+    kcal: 35
+    proteina: 3.3
+    carboidrato: 4.9
+    gordura: 0.2
+    fibra: 0

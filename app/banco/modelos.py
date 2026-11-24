@@ -9,7 +9,7 @@ Cada classe aqui vira uma tabela. Elas vão sendo adicionadas fase a fase:
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.banco.sessao import Base
@@ -51,3 +51,27 @@ class Mensagem(Base):
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
 
     usuario: Mapped[Usuario] = relationship(back_populates="mensagens")
+
+
+class Alimento(Base):
+    """Um alimento da base nutricional. Todos os valores são por 100 g.
+
+    `origem` diz de onde veio o número:
+    - "taco": Tabela TACO 4ª edição (NEPA/Unicamp), a fonte principal;
+    - "derivado": calculado a partir de um alimento da TACO (ex.: macarrão cozido);
+    - "manual": valor de referência digitado por nós, para o que a TACO não tem.
+    """
+
+    __tablename__ = "alimentos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)  # na TACO, é o número oficial
+    nome: Mapped[str] = mapped_column(String(120), unique=True)
+    nome_busca: Mapped[str] = mapped_column(String(120), index=True)  # sem acento, minúsculo
+    categoria: Mapped[str] = mapped_column(String(60))
+    origem: Mapped[str] = mapped_column(String(16), default="taco")
+    kcal: Mapped[float | None] = mapped_column(Float)
+    proteina: Mapped[float | None] = mapped_column(Float)  # g
+    carboidrato: Mapped[float | None] = mapped_column(Float)  # g
+    gordura: Mapped[float | None] = mapped_column(Float)  # g (lipídeos)
+    fibra: Mapped[float | None] = mapped_column(Float)  # g
+    sodio: Mapped[float | None] = mapped_column(Float)  # mg

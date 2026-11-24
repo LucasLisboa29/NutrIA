@@ -1,0 +1,151 @@
+# Sinônimos populares: como as pessoas falam -> nome exato do alimento na base.
+#
+# A TACO usa nomes técnicos ("Arroz, tipo 1, cozido"). Quem conversa diz "arroz".
+# Aqui fica a escolha padrão para cada jeito comum de falar. Pode escrever com ou sem
+# acento, no singular (o plural é tratado sozinho). O que não estiver aqui cai na busca
+# aproximada.
+#
+# Editável com o servidor ligado: vale na próxima mensagem (RF35).
+
+# Cereais e massas
+arroz: "Arroz, tipo 1, cozido"
+arroz branco: "Arroz, tipo 1, cozido"
+arroz integral: "Arroz, integral, cozido"
+macarrao: "Macarrão, trigo, cozido"
+massa: "Macarrão, trigo, cozido"
+espaguete: "Macarrão, trigo, cozido"
+miojo: "Macarrão, instantâneo"
+lasanha: "Lasanha, massa fresca, cozida"
+cuscuz: "Cuscuz, de milho, cozido com sal"
+tapioca: "Tapioca, com manteiga"
+aveia: "Aveia, flocos, crua"
+farofa: "Mandioca, farofa, temperada"
+pipoca: "Pipoca, com óleo de soja, sem sal"
+
+# Pães
+pao: "Pão, trigo, francês"
+pao frances: "Pão, trigo, francês"
+pao de sal: "Pão, trigo, francês"
+pao careca: "Pão, trigo, francês"
+cacetinho: "Pão, trigo, francês"
+pao de forma: "Pão, trigo, forma, integral"
+pao integral: "Pão, trigo, forma, integral"
+pao de queijo: "Pão, de queijo, assado"
+pao de hamburguer: "Pão, hambúrguer"
+torrada: "Torrada, pão francês"
+
+# Feijões
+feijao: "Feijão, carioca, cozido"
+feijao carioca: "Feijão, carioca, cozido"
+feijao preto: "Feijão, preto, cozido"
+feijao fradinho: "Feijão, fradinho, cozido"
+feijoada: "Feijoada"
+tropeiro: "Feijão tropeiro mineiro"
+feijao tropeiro: "Feijão tropeiro mineiro"
+baiao de dois: "Baião de dois, arroz e feijão-de-corda"
+
+# Carnes
+carne: "Carne, bovina, contra-filé, sem gordura, grelhado"
+bife: "Carne, bovina, contra-filé, sem gordura, grelhado"
+contra file: "Carne, bovina, contra-filé, sem gordura, grelhado"
+alcatra: "Carne, bovina, miolo de alcatra, sem gordura, grelhado"
+picanha: "Carne, bovina, picanha, com gordura, grelhada"
+patinho: "Carne, bovina, patinho, sem gordura, grelhado"
+carne moida: "Carne, bovina, acém, moído, cozido"
+file mignon: "Carne, bovina, filé mingnon, sem gordura, grelhado"
+costela: "Carne, bovina, costela, assada"
+bife a milanesa: "Carne, bovina, contra-filé, à milanesa"
+hamburguer: "Hambúrguer, bovino, grelhado"
+frango: "Frango, peito, sem pele, grelhado"
+peito de frango: "Frango, peito, sem pele, grelhado"
+file de frango: "Frango, peito, sem pele, grelhado"
+frango grelhado: "Frango, peito, sem pele, grelhado"
+coxa de frango: "Frango, coxa, com pele, assada"
+sobrecoxa: "Frango, sobrecoxa, com pele, assada"
+frango a milanesa: "Frango, filé, à milanesa"
+linguica: "Lingüiça, porco, grelhada"
+bisteca: "Porco, bisteca, grelhada"
+lombo: "Porco, lombo, assado"
+presunto: "Presunto, sem capa de gordura"
+mortadela: "Mortadela"
+peixe: "Merluza, filé, assado"
+tilapia: "Merluza, filé, assado"  # a TACO não tem tilápia; merluza é o peixe branco mais próximo
+salmao: "Salmão, sem pele, fresco, grelhado"
+atum: "Atum, conserva em óleo"
+sardinha: "Sardinha, conserva em óleo"
+
+# Ovos e laticínios
+ovo: "Ovo, de galinha, inteiro, cozido/10minutos"
+ovo cozido: "Ovo, de galinha, inteiro, cozido/10minutos"
+ovo frito: "Ovo, de galinha, inteiro, frito"
+ovo mexido: "Ovo, de galinha, inteiro, frito"
+omelete: "Omelete, de queijo"
+leite: "Leite, de vaca, integral"
+leite integral: "Leite, de vaca, integral"
+leite desnatado: "Leite, de vaca, desnatado, UHT"
+iogurte: "Iogurte, natural"
+queijo: "Queijo, minas, frescal"
+queijo minas: "Queijo, minas, frescal"
+mussarela: "Queijo, mozarela"
+mucarela: "Queijo, mozarela"
+queijo prato: "Queijo, prato"
+requeijao: "Queijo, requeijão, cremoso"
+manteiga: "Manteiga, com sal"
+margarina: "Margarina, com óleo interesterificado, com sal (65%de lipídeos)"
+
+# Frutas
+banana: "Banana, prata, crua"
+maca: "Maçã, Fuji, com casca, crua"
+laranja: "Laranja, pêra, crua"
+mamao: "Mamão, Papaia, cru"
+abacate: "Abacate, cru"
+
+# Verduras e legumes
+alface: "Alface, crespa, crua"
+salada: "Alface, crespa, crua"
+tomate: "Tomate, com semente, cru"
+cenoura: "Cenoura, crua"
+brocolis: "Brócolis, cozido"
+couve: "Couve, manteiga, refogada"
+batata: "Batata, inglesa, cozida"
+batata frita: "Batata, inglesa, frita"
+pure de batata: "Batata, inglesa, cozida"
+batata doce: "Batata, doce, cozida"
+mandioca: "Mandioca, cozida"
+aipim: "Mandioca, cozida"
+macaxeira: "Mandioca, cozida"
+mandioca frita: "Mandioca, frita"
+
+# Bebidas
+cafe: "Café, infusão 10%"
+cafezinho: "Café, infusão 10%"
+suco de laranja: "Laranja, pêra, suco"
+refrigerante: "Refrigerante, tipo cola"
+coca: "Refrigerante, tipo cola"
+coca cola: "Refrigerante, tipo cola"
+guarana: "Refrigerante, tipo guaraná"
+cerveja: "Cerveja, pilsen 2"
+achocolatado: "Leite, de vaca, achocolatado"
+
+# Gorduras, doces e outros
+azeite: "Azeite, de oliva, extra virgem"
+oleo: "Óleo, de soja"
+acucar: "Açúcar, refinado"
+mel: "Mel, de abelha"
+chocolate: "Chocolate, ao leite"
+maionese: "Maionese, tradicional com ovos"
+bolacha: "Biscoito, salgado, cream cracker"
+biscoito: "Biscoito, salgado, cream cracker"
+bolacha recheada: "Biscoito, doce, recheado com chocolate"
+bolo: "Bolo, pronto, chocolate"
+
+# Pratos prontos (RF13: usa o valor do prato pronto)
+pizza: "Pizza, muçarela"
+strogonoff: "Estrogonofe de carne"
+estrogonofe: "Estrogonofe de carne"
+strogonoff de frango: "Estrogonofe de frango"
+estrogonofe de frango: "Estrogonofe de frango"
+coxinha: "Coxinha de frango, frita"
+pastel: "Pastel, de carne, frito"
+pastel de queijo: "Pastel, de queijo, frito"
+arroz carreteiro: "Arroz carreteiro"
