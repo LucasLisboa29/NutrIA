@@ -194,7 +194,7 @@ async function enviar(texto, arquivo) {
     texto,
     tipo_midia: tipo,
     url_midia: arquivo ? URL.createObjectURL(arquivo) : null,
-    horario: new Date().toISOString(),
+    horario: horarioAtual(),
   });
   campoTexto.value = "";
   limparAnexo();
@@ -203,6 +203,7 @@ async function enviar(texto, arquivo) {
   const dados = new FormData();
   dados.append("telefone", telefoneAtual());
   dados.append("texto", texto);
+  dados.append("agora_simulado", $("agora-simulado").value); // vazio = relógio real
   if (arquivo) dados.append("arquivo", arquivo, arquivo.name || nomeDoAudio(arquivo.type));
 
   travarEnvio(true);
@@ -296,6 +297,28 @@ $("btn-microfone").addEventListener("click", async () => {
 function nomeDoAudio(mime) {
   return mime.includes("ogg") ? "gravacao.ogg" : "gravacao.webm";
 }
+
+// ---------- Relógio simulado (RF33) ----------
+
+const campoRelogio = $("agora-simulado");
+
+function horarioAtual() {
+  // O horário do campo é de Brasília; para desenhar o balão, basta tratá-lo como local.
+  return campoRelogio.value ? new Date(campoRelogio.value).toISOString() : new Date().toISOString();
+}
+
+function atualizarDicaRelogio() {
+  campoRelogio.classList.toggle("simulando", Boolean(campoRelogio.value));
+  $("dica-relogio").textContent = campoRelogio.value
+    ? "⏰ Simulando: o bot acha que é esse momento. Avance o relógio entre as mensagens."
+    : "Vazio = relógio real. Preenchido, o bot acha que é esse momento (horário de Brasília).";
+}
+
+campoRelogio.addEventListener("change", atualizarDicaRelogio);
+$("btn-relogio-real").addEventListener("click", () => {
+  campoRelogio.value = "";
+  atualizarDicaRelogio();
+});
 
 // ---------- Painel: abas ----------
 

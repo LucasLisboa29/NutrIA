@@ -5,13 +5,12 @@
 
 ## Agora
 
-- **Fase atual:** Fase 5, Consultas e correções (não iniciada)
-- **Próximo passo:** ferramenta `consultar_resumo` (dia e semana, comparado com a meta) e
-  `quanto_falta`; depois `corrigir_item`/`apagar_item` e o "apagar meus dados" (o termo de
-  uso já promete isso).
+- **Fase atual:** Fase 6, Foto e áudio (não iniciada)
+- **Próximo passo:** criar a conta na Groq e pôr a `GROQ_API_KEY` no `.env`; depois a
+  interface `Transcritor` (`app/audio/base.py`) e o adaptador Groq.
 - **A conferir pelo Lucas:** gravar um áudio pelo microfone no simulador (o teste
   automático não consegue usar o microfone).
-- **Bloqueios:** nenhum.
+- **Bloqueios:** a Fase 6 precisa da API key da Groq (o Lucas cria a conta).
 
 ## Status das fases
 
@@ -23,7 +22,7 @@
 | 2 — Base nutricional | ✅ Concluído |
 | 3 — Agente v1 (texto) | ✅ Concluído |
 | 4 — Perfil e metas | ✅ Concluído |
-| 5 — Consultas e correções | ⬜ Não iniciado |
+| 5 — Consultas e correções | ✅ Concluído |
 | 6 — Foto e áudio | ⬜ Não iniciado |
 | 7 — Calibragem | ⬜ Não iniciado |
 | 8 — WhatsApp | ⬜ Não iniciado |
@@ -67,6 +66,13 @@
 | 2026-11-24 | Mifflin-St Jeor; perder −20%, ganhar +10%; proteína 1,6–2,0 g/kg; gordura 25% | Referências gerais para adultos; ajustáveis no YAML |
 | 2026-11-24 | Sem meta para menores de 18 anos | A fórmula é para adultos; o bot sugere nutricionista |
 | 2026-11-24 | Idade guardada com a data em que foi informada | A idade "envelhece" sozinha |
+| 2026-11-24 | "Quanto falta" dentro de `consultar_resumo` (campo `falta`), não uma ferramenta separada | Menos ferramentas = IA escolhe melhor; a conta continua no código |
+| 2026-11-24 | Correção de quantidade/alimento usa `atualizar_item` (não um `corrigir_item` novo) | Já fazia exatamente isso, sem duplicar |
+| 2026-11-24 | Apagar meus dados em 2 etapas garantidas pelo código (pedido e confirmação em mensagens diferentes, 10 min) | Ação irreversível não pode depender só da IA |
+| 2026-11-24 | Apagamento explícito tabela por tabela, direto no banco | O cascade do ORM deixou escapar a mensagem atual (achado nos testes) |
+| 2026-11-24 | Relógio simulado por requisição (ContextVar com deslocamento) | Testar dias/semanas sem esperar e sem afetar outros usuários |
+| 2026-11-24 | Histórico vai para a IA com [dd/mm HH:MM] em cada mensagem do usuário | Sem datas, a IA achou que as refeições de ontem tinham "sumido" |
+| 2026-11-24 | Pedido de apagar pendente aparece no `<contexto>` | Sem isso, a IA real pedia confirmação em laço |
 
 ## Diário de sessões
 
@@ -138,3 +144,17 @@
   "1 iogurte" = 1 pote (170 g).
 - Observar na Fase 7: o bot ainda faz 2 perguntas por mensagem às vezes; respostas um
   pouco longas.
+
+### 2026-11-24 — Sessão 2 (cont.): Fase 5, consultas e correções
+- Ferramentas novas: `consultar_resumo` (dia e semana, com meta e quanto falta),
+  `consultar_alimento` (sem registrar), `apagar_item`, `alterar_refeicao` e
+  `apagar_meus_dados` (2 etapas). Resumos em `app/nucleo/registros.py`.
+- Relógio simulado: campo "Fingir data e hora" no simulador; `agora()` respeita o
+  deslocamento só durante a mensagem.
+- Bug achado pelos testes: apagar o usuário deixava a mensagem atual no banco; agora o
+  apagamento é explícito por tabela.
+- 87 testes passando. Marco com a IA real: dia simulado de 25/11 (café, PF, banana →
+  maçã, pizza 2 → 1 fatia) com resumo do dia batendo com o painel (1.209 kcal) e resumo
+  da semana conferido à mão.
+- Calibrado com a IA real: datas no histórico (a IA dizia que dados "sumiram" na virada
+  do dia); não perguntar perfil já completo; aviso de pedido de apagar no contexto.

@@ -32,7 +32,7 @@ from app.ia.base import (
 )
 from app.nucleo import ferramentas, historico, perfil, registros
 from app.telemetria import Telemetria
-from app.tempo import agora, como_utc
+from app.tempo import agora, como_utc, para_local
 
 MAX_PASSOS = 6  # trava de segurança: no máximo 6 idas e voltas com a IA por mensagem
 HISTORICO_MENSAGENS = 12  # quantas mensagens anteriores a IA recebe (RF04)
@@ -52,7 +52,7 @@ def processar(db: Session, entrada: MensagemEntrada) -> Resultado:
     usuario = historico.obter_ou_criar_usuario(db, entrada.remetente)
     mensagens_anteriores = _historico(db, usuario)  # antes de gravar a atual
     primeiro_contato = not usuario.mensagens
-    historico.gravar_entrada(db, usuario, entrada)
+    mensagem_entrada = historico.gravar_entrada(db, usuario, entrada)
     db.commit()
 
     aceitou = perfil.tem_aceite(usuario)
@@ -71,11 +71,17 @@ def processar(db: Session, entrada: MensagemEntrada) -> Resultado:
             f"Você disse: *{entrada.texto}*"
         )
     else:
-        texto = _conversar(db, usuario, entrada, mensagens_anteriores, telemetria, depuracao, aceitou)
+        texto = _conversar(
+            db, usuario, entrada, mensagens_anteriores, telemetria, depuracao, aceitou,
+            mensagem_entrada.id,
+        )
 
     saida = MensagemSaida(destinatario=entrada.remetente, texto=texto)
-    historico.gravar_saida(db, usuario, saida, canal=entrada.canal)
-    db.commit()
+    if not depuracao.get("usuario_apagado"):
+        # Depois de "apagar meus dados", nada é gravado: nem a despedida (senão o usuário
+        # seria recriado no banco).
+        historico.gravar_saida(db, usuario, saida, canal=entrada.canal)
+        db.commit()
 
     depuracao.update(telemetria.resumo())
     return Resultado(saida=saida, depuracao=depuracao)
@@ -89,6 +95,7 @@ def _conversar(
     telemetria: Telemetria,
     depuracao: dict,
     aceitou: bool,
+    mensagem_id: int,
 ) -> str:
     rota = roteador.rota("dia_a_dia")
     depuracao.update({"rota": rota.nome, "modelo": rota.modelo, "esforco": rota.esforco})
@@ -107,10 +114,19 @@ def _conversar(
     if entrada.midia is not None:
         tipo = "uma foto" if entrada.midia.tipo is TipoMidia.IMAGEM else "um áudio"
         texto_usuario += f"\n[o usuário mandou {tipo}, que você ainda não consegue ver/ouvir]"
+    if ferramentas.pedido_de_apagar_pendente(usuario.id):
+        # Sem este aviso, a IA não liga o "sim" do usuário ao pedido de apagar e pede
+        # confirmação de novo, em laço (visto no teste com a IA real).
+        contexto = contexto.replace(
+            "</contexto>",
+            "ATENÇÃO: há um pedido de APAGAR TODOS OS DADOS aguardando confirmação. Se o "
+            "usuário confirmar nesta mensagem, chame apagar_meus_dados com confirmado=true. "
+            "Se ele desistir, não chame.\n</contexto>",
+        )
     depuracao["contexto"] = contexto
 
     conversa: list[Mensagem] = [*anteriores, MensagemUsuario(texto=texto_usuario, contexto=contexto)]
-    ctx = ferramentas.Contexto(db=db, usuario=usuario, canal=entrada.canal)
+    ctx = ferramentas.Contexto(db=db, usuario=usuario, canal=entrada.canal, mensagem_id=mensagem_id)
 
     try:
         ia = roteador.provedor(rota.provedor)
@@ -135,6 +151,10 @@ def _conversar(
             resultados = ResultadosFerramentas()
             for chamada in resposta.chamadas:  # a IA pode pedir várias de uma vez
                 resultados.resultados.append(_executar(ctx, chamada, telemetria, depuracao))
+                if ctx.usuario_apagado:
+                    # Tudo apagado: encerra sem chamar a IA de novo (o histórico não existe mais).
+                    depuracao["usuario_apagado"] = True
+                    return carregar_yaml("onboarding.yaml")["despedida"].strip()
             conversa.append(resultados)
 
         depuracao["aviso"] = f"Parou após {MAX_PASSOS} passos sem resposta final."
@@ -183,7 +203,10 @@ def _historico(db: Session, usuario: Usuario) -> list[Mensagem]:
         if como_utc(m.criado_em) < limite:
             continue
         if m.direcao == "entrada":
-            mensagens.append(MensagemUsuario(texto=m.texto or "[mídia]"))
+            # Com data e hora: sem isso, a IA não sabe que uma conversa foi "ontem" e acha
+            # que as refeições sumiram dos registros de hoje.
+            quando = para_local(m.criado_em).strftime("%d/%m %H:%M")
+            mensagens.append(MensagemUsuario(texto=f"[{quando}] {m.texto or '[mídia]'}"))
         elif mensagens:  # a conversa enviada à IA precisa começar pelo usuário
             mensagens.append(TurnoAssistente(texto=m.texto))
     return mensagens

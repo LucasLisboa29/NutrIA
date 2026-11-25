@@ -10,7 +10,7 @@ saem sempre do módulo de nutrição; a IA só informa o que e quanto foi comido
 
 import json
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -30,6 +30,8 @@ class Contexto:
     db: Session
     usuario: Usuario
     canal: str = "simulador"
+    mensagem_id: int = 0  # id da mensagem do usuário que está sendo respondida
+    usuario_apagado: bool = False  # vira True depois de apagar_meus_dados
 
 
 class ErroFerramenta(ValueError):
@@ -187,6 +189,93 @@ DEFINICOES = [
     ),
 ]
 
+DEFINICOES += [
+    Ferramenta(
+        nome="consultar_resumo",
+        descricao=(
+            "Resumo do que o usuário comeu: 'dia' (refeições com item_id, total, meta e "
+            "quanto falta de cada nutriente) ou 'semana' (7 dias até a data: total de cada "
+            "dia, média e dias dentro/acima/abaixo da meta). Use para 'quanto comi hoje?', "
+            "'quanto falta de proteína?', 'posso comer um doce?', 'como foi minha semana?' "
+            "e para achar itens de outros dias antes de corrigir."
+        ),
+        parametros={
+            "type": "object",
+            "properties": {
+                "periodo": {"type": "string", "enum": ["dia", "semana"]},
+                "data": {
+                    "type": ["string", "null"],
+                    "description": "AAAA-MM-DD (o dia, ou o último dia da semana). null = hoje.",
+                },
+            },
+            "required": ["periodo"],
+        },
+    ),
+    Ferramenta(
+        nome="consultar_alimento",
+        descricao=(
+            "Calcula calorias e macros de um alimento ou prato SEM registrar. Use para "
+            "perguntas como 'quantas calorias tem uma banana?' ou 'vale mais a pena X ou Y?'."
+        ),
+        parametros={
+            "type": "object",
+            "properties": {
+                "alimento": {"type": "string"},
+                "quantidade": {"type": ["number", "null"]},
+                "unidade": {"type": ["string", "null"]},
+                "tamanho": {
+                    "type": ["string", "null"],
+                    "enum": ["pequeno", "medio", "grande", "cheio", "raso", None],
+                },
+            },
+            "required": ["alimento"],
+        },
+    ),
+    Ferramenta(
+        nome="apagar_item",
+        descricao=(
+            "Remove um item registrado por engano ('apaga o suco', 'não comi a sobremesa'). "
+            "Se a refeição ficar vazia, ela também some. Para mudar quantidade ou alimento, "
+            "use atualizar_item em vez de apagar e registrar de novo."
+        ),
+        parametros={
+            "type": "object",
+            "properties": {"item_id": {"type": "integer"}},
+            "required": ["item_id"],
+        },
+    ),
+    Ferramenta(
+        nome="alterar_refeicao",
+        descricao=(
+            "Muda o tipo ou a data/hora de uma refeição inteira ('não foi almoço, foi "
+            "janta', 'isso foi ontem')."
+        ),
+        parametros={
+            "type": "object",
+            "properties": {
+                "refeicao_id": {"type": "integer"},
+                "tipo": {"type": ["string", "null"], "enum": [*registros.TIPOS, None]},
+                "quando": {"type": ["string", "null"], "description": "AAAA-MM-DD HH:MM (Brasília)."},
+            },
+            "required": ["refeicao_id"],
+        },
+    ),
+    Ferramenta(
+        nome="apagar_meus_dados",
+        descricao=(
+            "Apaga DE VERDADE todos os dados do usuário (refeições, perfil, pesos, "
+            "conversas e aceite). Funciona em duas etapas: chame quando o usuário pedir; o "
+            "sistema devolve o aviso para você pedir a confirmação. Só depois que ele "
+            "confirmar, numa NOVA mensagem, chame de novo com confirmado=true."
+        ),
+        parametros={
+            "type": "object",
+            "properties": {"confirmado": {"type": "boolean"}},
+            "required": ["confirmado"],
+        },
+    ),
+]
+
 # Antes do aceite dos termos (LGPD), a IA só tem esta ferramenta.
 DEFINICOES_ONBOARDING = [
     Ferramenta(
@@ -199,6 +288,7 @@ DEFINICOES_ONBOARDING = [
         parametros={"type": "object", "properties": {}},
     ),
 ]
+DEFINICOES_ONBOARDING.append(next(f for f in DEFINICOES if f.nome == "apagar_meus_dados"))
 
 
 # ---------- Execução ----------
@@ -210,11 +300,16 @@ def executar(ctx: Contexto, nome: str, argumentos: dict) -> dict:
         "atualizar_item": atualizar_item,
         "atualizar_perfil": atualizar_perfil,
         "registrar_aceite": registrar_aceite,
+        "consultar_resumo": consultar_resumo,
+        "consultar_alimento": consultar_alimento,
+        "apagar_item": apagar_item,
+        "alterar_refeicao": alterar_refeicao,
+        "apagar_meus_dados": apagar_meus_dados,
     }
     if nome not in funcoes:
         raise ErroFerramenta(f"Ferramenta desconhecida: {nome}")
     # RN07 garantida pelo código, não só pelo prompt: sem aceite, nada de dado pessoal.
-    if nome != "registrar_aceite" and not perfis.tem_aceite(ctx.usuario):
+    if nome not in ("registrar_aceite", "apagar_meus_dados") and not perfis.tem_aceite(ctx.usuario):
         raise ErroFerramenta("O usuário ainda não aceitou o termo de uso: nada pode ser gravado.")
     return funcoes[nome](ctx, argumentos)
 
@@ -263,10 +358,7 @@ def registrar_refeicao(ctx: Contexto, args: dict) -> dict:
 
 
 def atualizar_item(ctx: Contexto, args: dict) -> dict:
-    item = ctx.db.get(ItemRefeicao, args.get("item_id"))
-    if item is None or item.refeicao.usuario_id != ctx.usuario.id:
-        raise ErroFerramenta("item_id não encontrado para este usuário.")
-
+    item = _item_do_usuario(ctx, args.get("item_id"))
     antes = _resumo_item(item)
     # Campo ausente ou null = "não mudou" (os modelos costumam mandar null em tudo).
     def mudou_ou_atual(campo: str, atual):
@@ -333,6 +425,106 @@ def registrar_aceite(ctx: Contexto, args: dict) -> dict:
     return {"aceite": "registrado", "versao_termo": consentimento.versao_termo}
 
 
+def consultar_resumo(ctx: Contexto, args: dict) -> dict:
+    dia = _data(args.get("data")) or registros.hoje()
+    if args.get("periodo") == "semana":
+        return registros.resumo_semana(ctx.db, ctx.usuario, dia)
+    return registros.resumo_dia(ctx.db, ctx.usuario, dia)
+
+
+def consultar_alimento(ctx: Contexto, args: dict) -> dict:
+    """Mesma conta do registro, mas nada é gravado (RF24)."""
+    calculados = _calcular_item(ctx.db, {**args, "estimativa_ia": None})
+    if calculados is None:
+        return {"encontrado": False, "alimento": args.get("alimento"),
+                "instrucao": "Não está na tabela. Se responder, deixe claro que é uma estimativa sua."}
+    return {
+        "encontrado": True,
+        "registrado": False,
+        "itens": [
+            {"alimento": c.alimento, "gramas": c.gramas, "kcal": c.kcal, "proteina": c.proteina,
+             "carboidrato": c.carboidrato, "gordura": c.gordura, "estimado": c.estimado,
+             "explicacao": c.explicacao}
+            for c in calculados
+        ],
+        "total": {campo: round(sum(getattr(c, campo) for c in calculados), 1)
+                  for campo in ("kcal", "proteina", "carboidrato", "gordura")},
+    }
+
+
+def apagar_item(ctx: Contexto, args: dict) -> dict:
+    item = _item_do_usuario(ctx, args.get("item_id"))
+    refeicao = item.refeicao
+    apagado = _resumo_item(item)
+    refeicao.itens.remove(item)  # o cascade "delete-orphan" apaga do banco
+    refeicao_apagada = not refeicao.itens
+    dia = para_local(refeicao.data_hora).date()
+    if refeicao_apagada:
+        ctx.db.delete(refeicao)
+    ctx.db.commit()
+    resultado = {"apagado": apagado, "refeicao_apagada": refeicao_apagada,
+                 "total_do_dia": registros.totais_do_dia(ctx.db, ctx.usuario, dia)}
+    if not refeicao_apagada:
+        resultado["total_da_refeicao"] = registros.totais(refeicao.itens)
+    return resultado
+
+
+def alterar_refeicao(ctx: Contexto, args: dict) -> dict:
+    refeicao = ctx.db.get(Refeicao, args.get("refeicao_id"))
+    if refeicao is None or refeicao.usuario_id != ctx.usuario.id:
+        raise ErroFerramenta("refeicao_id não encontrado para este usuário.")
+    antes = {"tipo": refeicao.tipo, "quando": f"{para_local(refeicao.data_hora):%d/%m %H:%M}"}
+    if args.get("tipo"):
+        if args["tipo"] not in registros.TIPOS:
+            raise ErroFerramenta(f"tipo inválido. Use um de {list(registros.TIPOS)}.")
+        refeicao.tipo = args["tipo"]
+    if args.get("quando"):
+        refeicao.data_hora = _quando(args["quando"])
+    ctx.db.commit()
+    return {"alterado": True, "antes": antes,
+            "depois": {"tipo": refeicao.tipo, "quando": f"{para_local(refeicao.data_hora):%d/%m %H:%M}"}}
+
+
+# Pedidos de apagar aguardando confirmação: usuario_id -> (id da mensagem do pedido, validade).
+# Ficam só na memória: se o servidor reiniciar, o pedido expira (o usuário pede de novo).
+_PEDIDOS_APAGAR: dict[int, tuple[int, datetime]] = {}
+VALIDADE_PEDIDO = timedelta(minutes=10)
+
+
+def pedido_de_apagar_pendente(usuario_id: int) -> bool:
+    pedido = _PEDIDOS_APAGAR.get(usuario_id)
+    return pedido is not None and agora() <= pedido[1]
+
+
+def apagar_meus_dados(ctx: Contexto, args: dict) -> dict:
+    """RF26, em duas etapas garantidas pelo código (ação destrutiva e irreversível)."""
+    pedido = _PEDIDOS_APAGAR.get(ctx.usuario.id)
+    confirmacao_valida = (
+        args.get("confirmado") is True
+        and pedido is not None
+        and pedido[0] != ctx.mensagem_id  # a confirmação veio numa mensagem NOVA do usuário
+        and agora() <= pedido[1]
+    )
+    if not confirmacao_valida:
+        _PEDIDOS_APAGAR[ctx.usuario.id] = (ctx.mensagem_id, agora() + VALIDADE_PEDIDO)
+        return {
+            "apagado": False,
+            "aguardando_confirmacao": True,
+            "instrucao": (
+                "Explique que isso apaga PARA SEMPRE refeições, perfil, pesos e conversas, "
+                "e pergunte se ele confirma. Só chame de novo com confirmado=true se ele "
+                "confirmar na próxima mensagem (vale por 10 minutos)."
+            ),
+        }
+
+    _PEDIDOS_APAGAR.pop(ctx.usuario.id, None)
+    from app.nucleo import historico  # import aqui evita import circular
+
+    historico.apagar_usuario(ctx.db, ctx.usuario)
+    ctx.usuario_apagado = True
+    return {"apagado": True}
+
+
 # ---------- Ajudantes ----------
 
 
@@ -350,6 +542,22 @@ def _obter_ou_criar_refeicao(ctx: Contexto, args: dict) -> Refeicao:
     ctx.db.add(refeicao)
     ctx.db.flush()  # gera o id
     return refeicao
+
+
+def _item_do_usuario(ctx: Contexto, item_id) -> ItemRefeicao:
+    item = ctx.db.get(ItemRefeicao, item_id)
+    if item is None or item.refeicao.usuario_id != ctx.usuario.id:
+        raise ErroFerramenta("item_id não encontrado para este usuário.")
+    return item
+
+
+def _data(texto: str | None):
+    if not texto:
+        return None
+    try:
+        return datetime.strptime(texto.strip()[:10], "%Y-%m-%d").date()
+    except ValueError as erro:
+        raise ErroFerramenta("data deve estar no formato AAAA-MM-DD.") from erro
 
 
 def _quando(texto: str | None) -> datetime:

@@ -1,6 +1,7 @@
 """Testes do agente (Fase 3) com a IA falsa: o laço de ferramentas, o registro no banco,
 as correções e a telemetria. Nenhum teste aqui chama a API de verdade."""
 
+import re
 from datetime import timedelta
 
 import pytest
@@ -114,8 +115,9 @@ def test_contexto_tem_os_ids_e_o_historico_vai_junto(cliente, ia_falsa):
     enviar(cliente, "normal")
 
     mensagens = ia_falsa.pedidos[-1]["mensagens"]
-    # Histórico (RF04): a mensagem anterior e a resposta do bot.
-    assert mensagens[0].texto == "almocei arroz, feijão e um bife"
+    # Histórico (RF04): a mensagem anterior (com data e hora, para a IA não confundir
+    # dias) e a resposta do bot.
+    assert re.fullmatch(r"\[\d\d/\d\d \d\d:\d\d\] almocei arroz, feijão e um bife", mensagens[0].texto)
     assert mensagens[1].texto == "O bife era grande?"
     # Contexto: a IA sabe que horas são e os ids para corrigir.
     atual = mensagens[-1]

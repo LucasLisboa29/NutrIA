@@ -10,10 +10,18 @@ import shutil
 import uuid
 from pathlib import Path
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from app.banco.modelos import Mensagem, Usuario
+from app.banco.modelos import (
+    Consentimento,
+    HistoricoPeso,
+    ItemRefeicao,
+    Mensagem,
+    Perfil,
+    Refeicao,
+    Usuario,
+)
 from app.canais.base import MensagemEntrada, MensagemSaida, Midia
 from app.config import settings
 
@@ -83,10 +91,23 @@ def caminho_absoluto(mensagem: Mensagem) -> Path | None:
 
 
 def apagar_usuario(db: Session, usuario: Usuario) -> None:
-    """Apaga de verdade: mensagens, arquivos de mídia e o próprio usuário (RF26, RF32)."""
-    pasta = settings.pasta_uploads / str(usuario.id)
-    db.delete(usuario)  # o cascade apaga as mensagens
+    """Apaga de verdade todos os dados do usuário (RF26, RF32, LGPD).
+
+    Apaga tabela por tabela, direto no banco, em vez de confiar só no "cascade" do
+    SQLAlchemy: o cascade só enxerga o que já foi carregado na memória (uma mensagem
+    gravada há pouco podia escapar), e o SQLite não aplica o ON DELETE CASCADE sozinho.
+    Para a LGPD, "quase tudo" não serve.
+    """
+    usuario_id = usuario.id
+    pasta = settings.pasta_uploads / str(usuario_id)
+    db.flush()  # grava o que estiver pendente antes, para apagar junto
+    refeicoes = select(Refeicao.id).where(Refeicao.usuario_id == usuario_id)
+    db.execute(delete(ItemRefeicao).where(ItemRefeicao.refeicao_id.in_(refeicoes)))
+    for tabela in (Refeicao, Mensagem, HistoricoPeso, Consentimento, Perfil):
+        db.execute(delete(tabela).where(tabela.usuario_id == usuario_id))
+    db.execute(delete(Usuario).where(Usuario.id == usuario_id))
     db.commit()
+    db.expunge_all()  # esquece os objetos na memória: eles não existem mais no banco
     shutil.rmtree(pasta, ignore_errors=True)
 
 

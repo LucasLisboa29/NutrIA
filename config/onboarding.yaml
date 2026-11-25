@@ -15,3 +15,9 @@ boas_vindas: |
   Antes de começar, um combinado 🔒: para funcionar, eu preciso guardar o que você me contar sobre sua alimentação, seu peso e seus objetivos. Esses dados servem só para te acompanhar, não são vendidos nem compartilhados, e você pode pedir para apagar tudo quando quiser. E lembrando: eu não substituo um nutricionista ou médico.
 
   Você concorda? Responda *sim* para começarmos.
+
+# Resposta depois de "apagar meus dados" (RF26). Também é fixa: depois de apagar não
+# sobra histórico para a IA usar, e a mensagem não é gravada.
+despedida: |
+  Pronto, apaguei *tudo*: refeições, perfil, pesos e nossas conversas. 🗑️
+  Se um dia quiser voltar, é só mandar um "oi" que a gente começa do zero.

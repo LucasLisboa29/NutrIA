@@ -7,6 +7,7 @@ histórico, lista de usuários de teste, resetar usuário e servir as mídias.
 
 import re
 import time
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -16,7 +17,7 @@ from app.banco.modelos import Mensagem
 from app.banco.sessao import get_db
 from app.canais.base import MensagemEntrada, MensagemSaida, Midia, TipoMidia
 from app.nucleo import historico, orquestrador, perfil, registros
-from app.tempo import como_utc, para_local
+from app.tempo import como_utc, para_local, relogio_simulado
 
 TAMANHO_MAXIMO = 16 * 1024 * 1024  # 16 MB, o mesmo limite de áudio do WhatsApp
 
@@ -49,12 +50,18 @@ def receber_mensagem(
     telefone: str = Form(...),
     texto: str = Form(""),
     arquivo: UploadFile | None = File(None),
+    agora_simulado: str = Form(""),
     db: Session = Depends(get_db),
 ) -> dict:
-    """O usuário de teste mandou uma mensagem (texto, foto ou áudio)."""
+    """O usuário de teste mandou uma mensagem (texto, foto ou áudio).
+
+    `agora_simulado` (opcional, "AAAA-MM-DDTHH:MM", horário de Brasília) faz o sistema
+    fingir que é outro dia/hora durante esta mensagem (RF33).
+    """
     inicio = time.perf_counter()
-    entrada = adaptador.para_entrada(_validar_telefone(telefone), texto, arquivo)
-    resultado = orquestrador.processar(db, entrada)
+    with relogio_simulado(_ler_agora_simulado(agora_simulado)):
+        entrada = adaptador.para_entrada(_validar_telefone(telefone), texto, arquivo)
+        resultado = orquestrador.processar(db, entrada)
     return {
         "resposta": adaptador.responder(resultado.saida),
         "tempo_ms": round((time.perf_counter() - inicio) * 1000, 1),
@@ -144,6 +151,15 @@ def ver_midia(mensagem_id: int, db: Session = Depends(get_db)) -> FileResponse:
     if caminho is None or not caminho.exists():
         raise HTTPException(404, "Mídia não encontrada.")
     return FileResponse(caminho, media_type=mensagem.mime_midia)
+
+
+def _ler_agora_simulado(texto: str) -> datetime | None:
+    if not texto.strip():
+        return None
+    try:
+        return datetime.fromisoformat(texto.strip())
+    except ValueError as erro:
+        raise HTTPException(422, "agora_simulado deve estar no formato AAAA-MM-DDTHH:MM.") from erro
 
 
 def _validar_telefone(telefone: str) -> str:

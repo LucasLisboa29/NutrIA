@@ -117,15 +117,15 @@ NutrIA/
 
 ## Fase 5 — Consultas e correções
 
-- [ ] Ferramenta `consultar_resumo` (dia e semana, comparado com a meta) [RF21, RF23] · M
-- [ ] Ferramenta `quanto_falta` [RF22] · P
-- [ ] Ferramenta `consultar_alimento` (sem registrar) [RF24] · P
-- [ ] Ferramentas `corrigir_item` e `apagar_item` (corrige sem duplicar) [RF12] · M
-- [ ] Mudar o tipo ou a data de uma refeição ("não foi almoço, foi janta") · P
-- [ ] "Apagar meus dados": apagamento real com confirmação [RF26] · P
-- [ ] Simulador: fingir data e hora [RF33] · M
-- [ ] Fuso de Brasília em todos os cálculos de "hoje" [RN04] · P
-- [ ] Marco: um dia simulado completo bate com o painel · P
+- [x] Ferramenta `consultar_resumo` (dia e semana, comparado com a meta) [RF21, RF23] · M
+- [x] Ferramenta `quanto_falta` [RF22] · P (feito dentro de `consultar_resumo`: campo `falta`)
+- [x] Ferramenta `consultar_alimento` (sem registrar) [RF24] · P
+- [x] Ferramentas `corrigir_item` e `apagar_item` (corrige sem duplicar) [RF12] · M
+- [x] Mudar o tipo ou a data de uma refeição ("não foi almoço, foi janta") · P
+- [x] "Apagar meus dados": apagamento real com confirmação [RF26] · P
+- [x] Simulador: fingir data e hora [RF33] · M
+- [x] Fuso de Brasília em todos os cálculos de "hoje" [RN04] · P
+- [x] Marco: um dia simulado completo bate com o painel · P
 
 ## Fase 6 — Foto e áudio
 

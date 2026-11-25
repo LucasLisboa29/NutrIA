@@ -120,3 +120,81 @@ def texto_contexto(db: Session, usuario: Usuario) -> str:
         )
     linhas.append("</contexto>")
     return "\n".join(linhas)
+
+
+# ---------- Resumos (RF21, RF22, RF23) ----------
+
+MARGEM_META = 0.10  # dentro da meta = até 10% acima ou abaixo
+
+
+def _meta_do_usuario(usuario: Usuario) -> dict | None:
+    from app.nucleo import metas, perfil
+
+    meta = perfil.meta(usuario.perfil)
+    if not isinstance(meta, metas.Meta):
+        return None
+    return {"kcal": meta.kcal, "proteina": meta.proteina_g, "carboidrato": meta.carboidrato_g, "gordura": meta.gordura_g}
+
+
+def resumo_dia(db: Session, usuario: Usuario, dia: date) -> dict:
+    """Tudo o que foi comido num dia, comparado com a meta, e quanto falta."""
+    refeicoes = refeicoes_do_dia(db, usuario, dia)
+    total = totais([i for r in refeicoes for i in r.itens])
+    resumo = {
+        "data": f"{dia:%d/%m/%Y}",
+        "dia_da_semana": DIAS_DA_SEMANA[dia.weekday()],
+        "refeicoes": [
+            {
+                "refeicao_id": r.id,
+                "tipo": TIPOS.get(r.tipo, r.tipo),
+                "hora": f"{para_local(r.data_hora):%H:%M}",
+                "kcal": totais(r.itens)["kcal"],
+                "itens": [
+                    {"item_id": i.id, "alimento": i.alimento_nome, "gramas": i.gramas,
+                     "kcal": i.kcal, "estimado": i.estimado}
+                    for i in r.itens
+                ],
+            }
+            for r in refeicoes
+        ],
+        "total": total,
+    }
+    meta = _meta_do_usuario(usuario)
+    resumo["meta"] = meta
+    if meta:
+        # Quanto falta (RF22): negativo quer dizer que passou da meta.
+        resumo["falta"] = {campo: round(meta[campo] - total[campo], 1) for campo in meta}
+        resumo["percentual_kcal"] = round(100 * total["kcal"] / meta["kcal"])
+    return resumo
+
+
+def resumo_semana(db: Session, usuario: Usuario, ultimo_dia: date) -> dict:
+    """Os 7 dias até `ultimo_dia`: total de cada dia, média e situação perante a meta."""
+    meta = _meta_do_usuario(usuario)
+    dias = []
+    for deslocamento in range(6, -1, -1):
+        dia = ultimo_dia - timedelta(days=deslocamento)
+        total = totais_do_dia(db, usuario, dia)
+        registro = {"data": f"{dia:%d/%m}", "dia_da_semana": DIAS_DA_SEMANA[dia.weekday()],
+                    "kcal": total["kcal"], "proteina": total["proteina"]}
+        if meta and total["kcal"] > 0:
+            diferenca = (total["kcal"] - meta["kcal"]) / meta["kcal"]
+            registro["situacao"] = (
+                "dentro" if abs(diferenca) <= MARGEM_META else ("acima" if diferenca > 0 else "abaixo")
+            )
+        dias.append(registro)
+
+    com_registro = [d for d in dias if d["kcal"] > 0]
+    resumo = {
+        "periodo": f"{dias[0]['data']} a {dias[-1]['data']}",
+        "dias": dias,
+        "dias_com_registro": len(com_registro),
+        "media_kcal": round(sum(d["kcal"] for d in com_registro) / len(com_registro)) if com_registro else 0,
+        "media_proteina": round(sum(d["proteina"] for d in com_registro) / len(com_registro)) if com_registro else 0,
+        "meta": meta,
+        "observacao": "A média considera só os dias com algum registro.",
+    }
+    if meta:
+        for situacao in ("dentro", "acima", "abaixo"):
+            resumo[f"dias_{situacao}_da_meta"] = sum(1 for d in dias if d.get("situacao") == situacao)
+    return resumo

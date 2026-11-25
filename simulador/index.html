@@ -48,6 +48,13 @@
         </div>
         <button type="button" id="btn-resetar" class="perigo">Resetar este usuário</button>
         <p class="dica">Resetar apaga as mensagens e os arquivos deste número. Os outros não são afetados.</p>
+
+        <label for="agora-simulado" class="rotulo-relogio">Fingir data e hora (RF33)</label>
+        <div class="linha">
+          <input id="agora-simulado" type="datetime-local">
+          <button type="button" id="btn-relogio-real">Hora real</button>
+        </div>
+        <p class="dica" id="dica-relogio">Vazio = relógio real. Preenchido, o bot acha que é esse momento (horário de Brasília).</p>
       </section>
 
       <section>

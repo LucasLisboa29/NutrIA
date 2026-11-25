@@ -211,6 +211,16 @@ button:disabled { opacity: 0.5; cursor: wait; }
   word-break: break-word;
 }
 
+.rotulo-relogio { margin-top: 14px; }
+.painel input[type="datetime-local"] {
+  flex: 1;
+  padding: 7px 8px;
+  font-size: 14px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+}
+.painel input.simulando { border-color: #d39e00; background: #fff8e1; }
+
 /* ---------- Abas do painel ---------- */
 .abas { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--borda); }
 .painel .aba {

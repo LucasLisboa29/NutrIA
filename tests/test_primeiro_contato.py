@@ -29,13 +29,14 @@ def test_boas_vindas_sao_fixas_e_nao_gastam_ia(cliente, ia_falsa):
     assert json["depuracao"]["modo"] == "primeiro_contato"
 
 
-def test_antes_do_aceite_a_ia_so_tem_a_ferramenta_de_aceite(cliente, ia_falsa):
+def test_antes_do_aceite_a_ia_so_tem_aceite_e_apagar(cliente, ia_falsa):
     enviar(cliente, "oi")
     ia_falsa.roteiro = ["Preciso do seu sim antes de anotar 🙂"]
     enviar(cliente, "comi um pão")
 
     pedido = ia_falsa.pedidos[0]
-    assert nomes_das_ferramentas(pedido) == ["registrar_aceite"]
+    # Nada que grave dado de saúde; só aceitar ou pedir para apagar a conversa.
+    assert nomes_das_ferramentas(pedido) == ["registrar_aceite", "apagar_meus_dados"]
     assert "NÃO aceitou" in pedido["mensagens"][-1].contexto
     assert "termo de uso" in pedido["sistema"]
 
