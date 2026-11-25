@@ -362,11 +362,13 @@ function mostrarDepuracao(json) {
 // ---------- Painel: banco (RF31) ----------
 
 async function carregarBanco() {
-  const { dias } = await (await fetch(`/simulador/banco/${telefoneAtual()}`)).json();
+  const banco = await (await fetch(`/simulador/banco/${telefoneAtual()}`)).json();
+  const { dias } = banco;
   const alvo = $("banco");
   alvo.innerHTML = "";
+  alvo.append(cartaoPerfil(banco));
   if (!dias.length) {
-    alvo.innerHTML = '<p class="dica">Nenhuma refeição gravada para este usuário.</p>';
+    alvo.insertAdjacentHTML("beforeend", '<p class="dica">Nenhuma refeição gravada para este usuário.</p>');
     return;
   }
   for (const dia of dias) {
@@ -400,6 +402,54 @@ async function carregarBanco() {
     }
     alvo.append(blocoDia);
   }
+}
+
+// Perfil, meta e aceite (Fase 4). Tudo com textContent: dados do usuário nunca viram HTML.
+const ROTULOS = { nome: "Nome", sexo: "Sexo", idade: "Idade", peso_kg: "Peso (kg)", altura_cm: "Altura (cm)",
+  nivel_atividade: "Atividade", objetivo: "Objetivo" };
+
+function cartaoPerfil({ perfil, meta, aceite, pesos }) {
+  const cartao = document.createElement("div");
+  cartao.className = "cartao-perfil";
+
+  const linhaAceite = document.createElement("p");
+  linhaAceite.className = aceite ? "aceite ok" : "aceite pendente";
+  linhaAceite.textContent = aceite
+    ? `✅ Termo aceito em ${aceite.em} (versão ${aceite.versao})`
+    : "⏳ Termo de uso ainda não aceito: nada de saúde é gravado";
+  cartao.append(linhaAceite);
+
+  const tabela = document.createElement("dl");
+  for (const [campo, rotulo] of Object.entries(ROTULOS)) {
+    const dt = document.createElement("dt");
+    dt.textContent = rotulo;
+    const dd = document.createElement("dd");
+    const valor = perfil?.[campo];
+    dd.textContent = valor ?? "—";
+    if (valor == null) dd.className = "vazio";
+    tabela.append(dt, dd);
+  }
+  cartao.append(tabela);
+
+  const linhaMeta = document.createElement("p");
+  linhaMeta.className = "meta";
+  if (meta?.kcal) {
+    linhaMeta.textContent = `🎯 Meta: ${meta.kcal} kcal · P ${meta.proteina_g} g · C ${meta.carboidrato_g} g · G ${meta.gordura_g} g`;
+    linhaMeta.title = meta.explicacao;
+  } else if (meta?.motivo) {
+    linhaMeta.textContent = `🎯 Sem meta: ${meta.motivo}`;
+  } else {
+    linhaMeta.textContent = `🎯 Sem meta ainda. Falta: ${(meta?.faltando || []).join(", ")}`;
+  }
+  cartao.append(linhaMeta);
+
+  if (pesos?.length) {
+    const linhaPesos = document.createElement("p");
+    linhaPesos.className = "macros";
+    linhaPesos.textContent = "Peso: " + pesos.map((p) => `${p.peso_kg} kg (${p.em})`).join(" → ");
+    cartao.append(linhaPesos);
+  }
+  return cartao;
 }
 
 // ---------- Início ----------

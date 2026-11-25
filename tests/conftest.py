@@ -54,3 +54,13 @@ def ia_falsa():
     roteador.registrar_provedor("claude", falsa)
     yield falsa
     roteador._provedores.pop("claude", None)
+
+
+def aceitar_termo(telefone: str) -> None:
+    """Cria o usuário já com o termo aceito, para testes que não são sobre o primeiro contato."""
+    from app.nucleo import historico, perfil
+
+    with SessaoLocal() as sessao:
+        usuario = historico.obter_ou_criar_usuario(sessao, telefone)
+        perfil.registrar_aceite(sessao, usuario, "simulador")
+        sessao.commit()

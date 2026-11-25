@@ -3,6 +3,7 @@ as correções e a telemetria. Nenhum teste aqui chama a API de verdade."""
 
 from datetime import timedelta
 
+import pytest
 from sqlalchemy import select
 
 from app.banco.modelos import ItemRefeicao, Refeicao
@@ -12,8 +13,17 @@ from app.ia.claude import _converter_mensagens
 from app.nucleo.orquestrador import RESPOSTA_ERRO
 from app.tempo import agora, para_local
 
+from tests.conftest import aceitar_termo
+
 ANA = "5534999990001"
 BRUNO = "5534999990002"
+
+
+@pytest.fixture(autouse=True)
+def usuarios_que_ja_aceitaram(cliente):
+    """Estes testes são sobre o agente; o primeiro contato tem os testes dele."""
+    aceitar_termo(ANA)
+    aceitar_termo(BRUNO)
 
 ALMOCO = (
     "registrar_refeicao",

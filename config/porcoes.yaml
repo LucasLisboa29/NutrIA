@@ -267,6 +267,7 @@ alimentos:
   "Iogurte, *":
     padrao: 170
     pote: 170
+    unidade: 170
   "Chocolate, *":
     padrao: 25
     barra: 25

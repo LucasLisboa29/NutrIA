@@ -11,7 +11,13 @@ def enviar(cliente, telefone, texto="", arquivo=None):
     )
 
 
+def test_primeira_mensagem_recebe_boas_vindas_com_o_termo(cliente):
+    texto = enviar(cliente, ANA, "oi").json()["resposta"]["texto"]
+    assert "NutrIA" in texto and "concorda" in texto
+
+
 def test_sem_chave_de_ia_o_bot_avisa_e_ecoa(cliente):
+    enviar(cliente, ANA, "oi")  # a 1ª mensagem recebe as boas-vindas
     resposta = enviar(cliente, ANA, "almocei arroz e feijão")
 
     assert resposta.status_code == 200
@@ -57,6 +63,7 @@ def test_foto_com_legenda_fica_gravada_e_pode_ser_vista(cliente):
 
 def test_audio_gravado_no_navegador_e_aceito(cliente):
     audio = ("gravacao.webm", b"bytes-de-audio", "audio/webm;codecs=opus")
+    enviar(cliente, ANA, "oi")  # a 1ª mensagem recebe as boas-vindas
     resposta = enviar(cliente, ANA, arquivo=audio)
 
     # Áudio só é entendido na Fase 6; por enquanto o bot pede texto, sem travar.

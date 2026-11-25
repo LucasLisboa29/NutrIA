@@ -1,0 +1,33 @@
+# Parâmetros do cálculo de metas (RF18). Editável com o servidor ligado (RF35).
+#
+# Valores de referência gerais para adultos saudáveis. Não substituem a orientação de
+# um profissional (RN06): o bot deve lembrar disso quando fizer sentido.
+
+# Multiplicador do gasto em repouso conforme o nível de atividade física.
+fatores_atividade:
+  sedentario: 1.2       # trabalho sentado, quase sem exercício
+  leve: 1.375           # exercício leve 1 a 3 vezes por semana
+  moderado: 1.55        # exercício moderado 3 a 5 vezes por semana
+  intenso: 1.725        # exercício intenso 6 a 7 vezes por semana
+  muito_intenso: 1.9    # treino pesado diário ou trabalho físico pesado
+
+# Ajuste sobre o gasto total, conforme o objetivo (fração: -0.20 = 20% a menos).
+ajuste_objetivo:
+  perder: -0.20
+  manter: 0.0
+  ganhar: 0.10
+
+# RN05: a meta nunca fica abaixo deste piso, mesmo para perder peso.
+piso_kcal:
+  feminino: 1200
+  masculino: 1500
+
+# Distribuição dos macronutrientes.
+proteina_g_por_kg:
+  perder: 1.8           # mais proteína ajuda a preservar músculo no déficit
+  manter: 1.6
+  ganhar: 2.0
+gordura_fracao_kcal: 0.25   # 25% das calorias
+# O carboidrato fica com o restante das calorias.
+
+idade_minima: 18        # abaixo disso não calculamos meta (fórmula é para adultos)

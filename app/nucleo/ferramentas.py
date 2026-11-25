@@ -18,6 +18,7 @@ from app.banco.modelos import ItemRefeicao, Refeicao, Usuario
 from app.ia.base import Ferramenta
 from app.nutricao import calculo, porcoes, taco
 from app.nutricao.calculo import ItemCalculado
+from app.nucleo import perfil as perfis
 from app.nucleo import registros
 from app.tempo import agora, fuso_local, para_local
 
@@ -28,6 +29,7 @@ class Contexto:
 
     db: Session
     usuario: Usuario
+    canal: str = "simulador"
 
 
 class ErroFerramenta(ValueError):
@@ -146,6 +148,56 @@ DEFINICOES = [
             "required": ["item_id"],
         },
     ),
+    Ferramenta(
+        nome="atualizar_perfil",
+        descricao=(
+            "Salva dados do perfil que o usuário contou na conversa (aceita só parte "
+            "deles; envie apenas o que ele disse). Devolve o perfil, a meta diária "
+            "calculada (quando o perfil está completo) e o que ainda falta. Use também "
+            "quando ele atualizar algo ('tô pesando 78', 'quero ganhar massa')."
+        ),
+        parametros={
+            "type": "object",
+            "properties": {
+                "nome": {"type": ["string", "null"], "description": "Primeiro nome ou apelido."},
+                "sexo": {
+                    "type": ["string", "null"],
+                    "enum": [*perfis.SEXOS, None],
+                    "description": "Usado só na fórmula de gasto calórico.",
+                },
+                "idade": {"type": ["integer", "null"]},
+                "peso_kg": {"type": ["number", "null"]},
+                "altura_cm": {"type": ["number", "null"], "description": "Em centímetros (1,65 m = 165)."},
+                "nivel_atividade": {
+                    "type": ["string", "null"],
+                    "enum": [*perfis.NIVEIS, None],
+                    "description": (
+                        "sedentario (quase sem exercício), leve (1-3x/semana), moderado "
+                        "(3-5x/semana), intenso (6-7x/semana), muito_intenso (treino "
+                        "pesado diário ou trabalho físico)."
+                    ),
+                },
+                "objetivo": {
+                    "type": ["string", "null"],
+                    "enum": [*perfis.OBJETIVOS, None],
+                    "description": "perder, manter ou ganhar peso.",
+                },
+            },
+        },
+    ),
+]
+
+# Antes do aceite dos termos (LGPD), a IA só tem esta ferramenta.
+DEFINICOES_ONBOARDING = [
+    Ferramenta(
+        nome="registrar_aceite",
+        descricao=(
+            "Registra que o usuário aceitou o termo de uso apresentado nas boas-vindas. "
+            "Chame SOMENTE quando ele concordar de forma clara. Nunca chame se ele "
+            "estiver em dúvida, perguntando algo ou recusando."
+        ),
+        parametros={"type": "object", "properties": {}},
+    ),
 ]
 
 
@@ -153,9 +205,17 @@ DEFINICOES = [
 
 
 def executar(ctx: Contexto, nome: str, argumentos: dict) -> dict:
-    funcoes = {"registrar_refeicao": registrar_refeicao, "atualizar_item": atualizar_item}
+    funcoes = {
+        "registrar_refeicao": registrar_refeicao,
+        "atualizar_item": atualizar_item,
+        "atualizar_perfil": atualizar_perfil,
+        "registrar_aceite": registrar_aceite,
+    }
     if nome not in funcoes:
         raise ErroFerramenta(f"Ferramenta desconhecida: {nome}")
+    # RN07 garantida pelo código, não só pelo prompt: sem aceite, nada de dado pessoal.
+    if nome != "registrar_aceite" and not perfis.tem_aceite(ctx.usuario):
+        raise ErroFerramenta("O usuário ainda não aceitou o termo de uso: nada pode ser gravado.")
     return funcoes[nome](ctx, argumentos)
 
 
@@ -244,6 +304,33 @@ def atualizar_item(ctx: Contexto, args: dict) -> dict:
             ctx.db, ctx.usuario, para_local(item.refeicao.data_hora).date()
         ),
     }
+
+
+def atualizar_perfil(ctx: Contexto, args: dict) -> dict:
+    try:
+        mudou = perfis.atualizar(ctx.db, ctx.usuario, args)
+    except perfis.DadoInvalido as erro:
+        raise ErroFerramenta(str(erro)) from erro
+    ctx.db.commit()
+
+    resultado = {"atualizado": mudou, "perfil": perfis.como_dict(ctx.usuario.perfil)}
+    meta = perfis.meta(ctx.usuario.perfil)
+    if isinstance(meta, perfis.metas.Meta):
+        resultado["meta_diaria"] = meta.como_dict()
+    else:
+        resultado["meta_diaria"] = None
+        resultado["faltando_para_a_meta"] = meta.faltando
+        if meta.motivo:
+            resultado["motivo_sem_meta"] = meta.motivo
+    return resultado
+
+
+def registrar_aceite(ctx: Contexto, args: dict) -> dict:
+    if perfis.tem_aceite(ctx.usuario):
+        return {"aceite": "já registrado"}
+    consentimento = perfis.registrar_aceite(ctx.db, ctx.usuario, ctx.canal)
+    ctx.db.commit()
+    return {"aceite": "registrado", "versao_termo": consentimento.versao_termo}
 
 
 # ---------- Ajudantes ----------

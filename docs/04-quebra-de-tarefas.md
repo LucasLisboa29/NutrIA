@@ -106,14 +106,14 @@ NutrIA/
 
 ## Fase 4 — Perfil e metas
 
-- [ ] Tabelas `perfis` e `historico_peso` · P
-- [ ] Ferramenta `atualizar_perfil` (aceita dados parciais) [RF17, RF19] · M
-- [ ] `metas.py`: Mifflin-St Jeor × nível de atividade ± objetivo, com piso de segurança [RF18, RN05] · M
-- [ ] Testes do cálculo de metas · P
-- [ ] Primeiro contato: apresentação + aceite LGPD registrado com data, antes de gravar qualquer dado [RF16, RN07] · M
-- [ ] Coleta de perfil conversada, sem obrigar a responder tudo de uma vez · M
-- [ ] Gravar o peso no histórico a cada atualização [RF20] · P
-- [ ] Marco: usuário novo termina com perfil e meta só conversando · P
+- [x] Tabelas `perfis` e `historico_peso` · P
+- [x] Ferramenta `atualizar_perfil` (aceita dados parciais) [RF17, RF19] · M
+- [x] `metas.py`: Mifflin-St Jeor × nível de atividade ± objetivo, com piso de segurança [RF18, RN05] · M
+- [x] Testes do cálculo de metas · P
+- [x] Primeiro contato: apresentação + aceite LGPD registrado com data, antes de gravar qualquer dado [RF16, RN07] · M
+- [x] Coleta de perfil conversada, sem obrigar a responder tudo de uma vez · M
+- [x] Gravar o peso no histórico a cada atualização [RF20] · P
+- [x] Marco: usuário novo termina com perfil e meta só conversando · P
 
 ## Fase 5 — Consultas e correções
 

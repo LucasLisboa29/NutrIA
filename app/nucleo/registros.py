@@ -50,6 +50,40 @@ def hoje() -> date:
     return para_local(agora()).date()
 
 
+def texto_contexto_minimo() -> str:
+    """Contexto antes do aceite: só data e hora (nenhum dado pessoal)."""
+    momento = para_local(agora())
+    return "\n".join(
+        [
+            "<contexto>",
+            f"Agora: {DIAS_DA_SEMANA[momento.weekday()]}, {momento:%d/%m/%Y %H:%M} (horário de Brasília).",
+            "O usuário ainda NÃO aceitou o termo de uso.",
+            "</contexto>",
+        ]
+    )
+
+
+def _linhas_perfil(usuario: Usuario) -> list[str]:
+    from app.nucleo import metas, perfil  # import aqui evita import circular
+
+    dados = perfil.como_dict(usuario.perfil)
+    preenchidos = {k: v for k, v in dados.items() if v is not None}
+    linhas = [
+        "Perfil: " + (", ".join(f"{k}={v}" for k, v in preenchidos.items()) if preenchidos else "vazio")
+    ]
+    meta = perfil.meta(usuario.perfil)
+    if isinstance(meta, metas.Meta):
+        linhas.append(
+            f"Meta diária: {meta.kcal} kcal | proteína {meta.proteina_g} g | "
+            f"carboidrato {meta.carboidrato_g} g | gordura {meta.gordura_g} g"
+        )
+    elif meta.motivo:
+        linhas.append(f"Sem meta: {meta.motivo}")
+    else:
+        linhas.append("Sem meta ainda. Falta no perfil: " + ", ".join(meta.faltando))
+    return linhas
+
+
 def texto_contexto(db: Session, usuario: Usuario) -> str:
     """O "bilhete" que vai junto de cada mensagem do usuário para a IA.
 
@@ -60,6 +94,7 @@ def texto_contexto(db: Session, usuario: Usuario) -> str:
     linhas = [
         "<contexto>",
         f"Agora: {DIAS_DA_SEMANA[momento.weekday()]}, {momento:%d/%m/%Y %H:%M} (horário de Brasília).",
+        *_linhas_perfil(usuario),
     ]
     refeicoes = refeicoes_do_dia(db, usuario, momento.date())
     if not refeicoes:

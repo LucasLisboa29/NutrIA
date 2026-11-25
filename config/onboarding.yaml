@@ -1,0 +1,17 @@
+# Primeiro contato (RF16) e termo de uso (LGPD, RN07). Editável com o servidor ligado.
+#
+# versao_termo: mude sempre que o texto do termo mudar de sentido. Quem aceitou uma
+# versão antiga recebe o pedido de aceite de novo.
+
+versao_termo: "1"
+
+# Primeira mensagem do bot para um número novo. É fixa (não passa pela IA) para que o
+# texto do termo seja sempre exatamente o mesmo, e para ser instantânea e de graça.
+boas_vindas: |
+  Oi! Eu sou o *NutrIA* 🥗, seu assistente de alimentação no WhatsApp.
+
+  É só me contar o que você comeu, do seu jeito e sem precisar pesar nada, que eu anoto as calorias e os nutrientes e te ajudo a acompanhar o dia.
+
+  Antes de começar, um combinado 🔒: para funcionar, eu preciso guardar o que você me contar sobre sua alimentação, seu peso e seus objetivos. Esses dados servem só para te acompanhar, não são vendidos nem compartilhados, e você pode pedir para apagar tudo quando quiser. E lembrando: eu não substituo um nutricionista ou médico.
+
+  Você concorda? Responda *sim* para começarmos.

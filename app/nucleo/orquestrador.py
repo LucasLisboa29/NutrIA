@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 from app.banco.modelos import Mensagem as MensagemBanco
 from app.banco.modelos import Usuario
 from app.canais.base import MensagemEntrada, MensagemSaida, TipoMidia
-from app.config import PASTA_CONFIG
+from app.config import PASTA_CONFIG, carregar_yaml
 from app.ia import roteador
 from app.ia.base import (
     ErroIA,
@@ -30,7 +30,7 @@ from app.ia.base import (
     ResultadosFerramentas,
     TurnoAssistente,
 )
-from app.nucleo import ferramentas, historico, registros
+from app.nucleo import ferramentas, historico, perfil, registros
 from app.telemetria import Telemetria
 from app.tempo import agora, como_utc
 
@@ -51,11 +51,16 @@ def processar(db: Session, entrada: MensagemEntrada) -> Resultado:
     telemetria = Telemetria()
     usuario = historico.obter_ou_criar_usuario(db, entrada.remetente)
     mensagens_anteriores = _historico(db, usuario)  # antes de gravar a atual
+    primeiro_contato = not usuario.mensagens
     historico.gravar_entrada(db, usuario, entrada)
     db.commit()
 
-    depuracao: dict = {"ferramentas": []}
-    if entrada.midia is not None and not entrada.texto:
+    aceitou = perfil.tem_aceite(usuario)
+    depuracao: dict = {"ferramentas": [], "modo": "normal" if aceitou else "primeiro_contato"}
+    if not aceitou and primeiro_contato:
+        # Boas-vindas + termo: texto fixo, sem IA (mesmo texto para todos, rápido e grátis).
+        texto = carregar_yaml("onboarding.yaml")["boas_vindas"].strip()
+    elif entrada.midia is not None and not entrada.texto:
         texto = (
             "Por enquanto eu só entendo mensagens de texto 🙏 "
             "Fotos e áudios chegam em breve! Me conta por escrito o que você comeu?"
@@ -66,7 +71,7 @@ def processar(db: Session, entrada: MensagemEntrada) -> Resultado:
             f"Você disse: *{entrada.texto}*"
         )
     else:
-        texto = _conversar(db, usuario, entrada, mensagens_anteriores, telemetria, depuracao)
+        texto = _conversar(db, usuario, entrada, mensagens_anteriores, telemetria, depuracao, aceitou)
 
     saida = MensagemSaida(destinatario=entrada.remetente, texto=texto)
     historico.gravar_saida(db, usuario, saida, canal=entrada.canal)
@@ -83,20 +88,29 @@ def _conversar(
     anteriores: list[Mensagem],
     telemetria: Telemetria,
     depuracao: dict,
+    aceitou: bool,
 ) -> str:
     rota = roteador.rota("dia_a_dia")
     depuracao.update({"rota": rota.nome, "modelo": rota.modelo, "esforco": rota.esforco})
 
-    sistema = (PASTA_CONFIG / "prompt_sistema.md").read_text(encoding="utf-8")  # RF35
+    # Antes do aceite (LGPD), outro prompt e só a ferramenta de aceite. Os dois conjuntos
+    # ficam fixos durante o laço: trocar prompt ou ferramentas no meio invalida o cache.
+    if aceitou:
+        arquivo_prompt, definicoes = "prompt_sistema.md", ferramentas.DEFINICOES
+        contexto = registros.texto_contexto(db, usuario)
+    else:
+        arquivo_prompt, definicoes = "prompt_onboarding.md", ferramentas.DEFINICOES_ONBOARDING
+        contexto = registros.texto_contexto_minimo()
+    sistema = (PASTA_CONFIG / arquivo_prompt).read_text(encoding="utf-8")  # RF35
+
     texto_usuario = entrada.texto
     if entrada.midia is not None:
         tipo = "uma foto" if entrada.midia.tipo is TipoMidia.IMAGEM else "um áudio"
         texto_usuario += f"\n[o usuário mandou {tipo}, que você ainda não consegue ver/ouvir]"
-    contexto = registros.texto_contexto(db, usuario)
     depuracao["contexto"] = contexto
 
     conversa: list[Mensagem] = [*anteriores, MensagemUsuario(texto=texto_usuario, contexto=contexto)]
-    ctx = ferramentas.Contexto(db=db, usuario=usuario)
+    ctx = ferramentas.Contexto(db=db, usuario=usuario, canal=entrada.canal)
 
     try:
         ia = roteador.provedor(rota.provedor)
@@ -105,7 +119,7 @@ def _conversar(
                 resposta = ia.responder(
                     sistema=sistema,
                     mensagens=conversa,
-                    ferramentas=ferramentas.DEFINICOES,
+                    ferramentas=definicoes,
                     modelo=rota.modelo,
                     esforco=rota.esforco,
                     max_tokens=rota.max_tokens,

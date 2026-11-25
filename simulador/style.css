@@ -254,6 +254,25 @@ button:disabled { opacity: 0.5; cursor: wait; }
 .ferramenta summary { color: var(--texto); font-weight: 600; }
 
 /* ---------- Aba Banco ---------- */
+.cartao-perfil {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f6f8fa;
+  font-size: 13px;
+}
+.cartao-perfil .aceite { margin: 0 0 8px !important; font-size: 12.5px !important; }
+.cartao-perfil .aceite.pendente { color: #8a6100; }
+.cartao-perfil dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 0;
+}
+.cartao-perfil dt { color: var(--texto-fraco); }
+.cartao-perfil dd { margin: 0; }
+.cartao-perfil dd.vazio { color: var(--borda); }
+.cartao-perfil .meta { font-weight: 600; font-size: 13px !important; }
 .dia { margin-bottom: 14px; }
 .dia-topo {
   display: flex; justify-content: space-between;

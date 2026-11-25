@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.banco.modelos import Mensagem
 from app.banco.sessao import get_db
 from app.canais.base import MensagemEntrada, MensagemSaida, Midia, TipoMidia
-from app.nucleo import historico, orquestrador, registros
+from app.nucleo import historico, orquestrador, perfil, registros
 from app.tempo import como_utc, para_local
 
 TAMANHO_MAXIMO = 16 * 1024 * 1024  # 16 MB, o mesmo limite de áudio do WhatsApp
@@ -83,7 +83,22 @@ def ver_banco(telefone: str, db: Session = Depends(get_db)) -> dict:
     """Refeições gravadas do usuário, agrupadas por dia (mais recente primeiro), com totais (RF31)."""
     usuario = historico.buscar_usuario(db, _validar_telefone(telefone))
     if usuario is None:
-        return {"dias": []}
+        return {"dias": [], "perfil": {}, "meta": None, "aceite": None, "pesos": []}
+
+    meta = perfil.meta(usuario.perfil)
+    aceite = next((c for c in reversed(usuario.consentimentos)), None)
+    cabecalho = {
+        "perfil": perfil.como_dict(usuario.perfil),
+        "meta": meta.como_dict(),
+        "aceite": (
+            {"em": para_local(aceite.aceito_em).strftime("%d/%m/%Y %H:%M"), "versao": aceite.versao_termo}
+            if aceite else None
+        ),
+        "pesos": [
+            {"peso_kg": p.peso_kg, "em": para_local(p.registrado_em).strftime("%d/%m/%Y")}
+            for p in usuario.pesos
+        ],
+    }
 
     dias: dict[str, dict] = {}
     itens_por_dia: dict[str, list] = {}
@@ -103,7 +118,7 @@ def ver_banco(telefone: str, db: Session = Depends(get_db)) -> dict:
         )
     for data, dia in dias.items():
         dia["totais"] = registros.totais(itens_por_dia[data])
-    return {"dias": list(dias.values())}
+    return {"dias": list(dias.values()), **cabecalho}
 
 
 def _serializar_item(item) -> dict:

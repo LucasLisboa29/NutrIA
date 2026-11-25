@@ -12,7 +12,7 @@ cascata é o SQLAlchemy (o `cascade="all, delete-orphan"` nos relacionamentos).
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.banco.sessao import Base
@@ -38,6 +38,15 @@ class Usuario(Base):
         back_populates="usuario",
         cascade="all, delete-orphan",
         order_by="Refeicao.data_hora",
+    )
+    perfil: Mapped["Perfil | None"] = relationship(
+        back_populates="usuario", cascade="all, delete-orphan", uselist=False
+    )
+    pesos: Mapped[list["HistoricoPeso"]] = relationship(
+        cascade="all, delete-orphan", order_by="HistoricoPeso.registrado_em"
+    )
+    consentimentos: Mapped[list["Consentimento"]] = relationship(
+        cascade="all, delete-orphan", order_by="Consentimento.aceito_em"
     )
 
 
@@ -142,3 +151,49 @@ class ItemRefeicao(Base):
     )
 
     refeicao: Mapped[Refeicao] = relationship(back_populates="itens")
+
+
+class Consentimento(Base):
+    """Registro do aceite dos termos de uso (LGPD, RN07).
+
+    Fica numa tabela própria, com data e versão do termo, para provar *quando* e *com
+    qual texto* a pessoa concordou. Se o termo mudar, a versão muda e dá para pedir de novo.
+    """
+
+    __tablename__ = "consentimentos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"), index=True)
+    versao_termo: Mapped[str] = mapped_column(String(20))
+    canal: Mapped[str] = mapped_column(String(16))
+    aceito_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+
+
+class Perfil(Base):
+    """Dados para calcular a meta (RF17). Tudo opcional: a coleta é aos poucos, conversando."""
+
+    __tablename__ = "perfis"
+
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"), primary_key=True)
+    nome: Mapped[str | None] = mapped_column(String(60))
+    sexo: Mapped[str | None] = mapped_column(String(10))  # "feminino" ou "masculino" (para a fórmula)
+    idade: Mapped[int | None] = mapped_column(Integer)
+    idade_informada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    peso_kg: Mapped[float | None] = mapped_column(Float)  # o mais recente (histórico em historico_peso)
+    altura_cm: Mapped[float | None] = mapped_column(Float)
+    nivel_atividade: Mapped[str | None] = mapped_column(String(16))
+    objetivo: Mapped[str | None] = mapped_column(String(10))  # perder, manter ou ganhar
+    atualizado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora, onupdate=agora)
+
+    usuario: Mapped[Usuario] = relationship(back_populates="perfil")
+
+
+class HistoricoPeso(Base):
+    """Cada peso informado, para mostrar a evolução (RF20)."""
+
+    __tablename__ = "historico_peso"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"), index=True)
+    peso_kg: Mapped[float] = mapped_column(Float)
+    registrado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)

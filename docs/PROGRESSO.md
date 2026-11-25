@@ -5,9 +5,10 @@
 
 ## Agora
 
-- **Fase atual:** Fase 4, Perfil e metas (não iniciada)
-- **Próximo passo:** tabelas `perfis` e `historico_peso` e a ferramenta `atualizar_perfil`
-  (aceita dados parciais).
+- **Fase atual:** Fase 5, Consultas e correções (não iniciada)
+- **Próximo passo:** ferramenta `consultar_resumo` (dia e semana, comparado com a meta) e
+  `quanto_falta`; depois `corrigir_item`/`apagar_item` e o "apagar meus dados" (o termo de
+  uso já promete isso).
 - **A conferir pelo Lucas:** gravar um áudio pelo microfone no simulador (o teste
   automático não consegue usar o microfone).
 - **Bloqueios:** nenhum.
@@ -21,7 +22,7 @@
 | 1 — Simulador | ✅ Concluído |
 | 2 — Base nutricional | ✅ Concluído |
 | 3 — Agente v1 (texto) | ✅ Concluído |
-| 4 — Perfil e metas | ⬜ Não iniciado |
+| 4 — Perfil e metas | ✅ Concluído |
 | 5 — Consultas e correções | ⬜ Não iniciado |
 | 6 — Foto e áudio | ⬜ Não iniciado |
 | 7 — Calibragem | ⬜ Não iniciado |
@@ -58,6 +59,14 @@
 | 2026-11-24 | `tzdata` adicionado ao requirements | O Windows não traz a base de fusos (America/Sao_Paulo) |
 | 2026-11-24 | Cache: marca explícita no fim do prompt do sistema + cache automático | Só o automático não reaproveitava prompt+ferramentas entre mensagens (medido: custo caiu ~60%) |
 | 2026-11-24 | SDK da IA carregado ao ligar o servidor | A 1ª mensagem levava ~7 s por carregar o SDK |
+| 2026-11-24 | Boas-vindas com o termo: texto fixo em `config/onboarding.yaml`, sem IA | Termo sempre idêntico (prova jurídica), instantâneo e grátis |
+| 2026-11-24 | Aceite numa tabela própria (`consentimentos`) com data e versão do termo | Provar quando e com qual texto; nova versão pede aceite de novo |
+| 2026-11-24 | Antes do aceite: prompt próprio e só a ferramenta `registrar_aceite`; o código também bloqueia as outras | RN07 garantida pelo código, não só pelo prompt |
+| 2026-11-24 | Antes do aceite as mensagens do chat são guardadas, mas nenhum dado de saúde | Necessário para a conversa do aceite; dados sensíveis só depois. Recusa + apagar fica para a Fase 5 |
+| 2026-11-24 | Meta calculada na hora a partir do perfil (não gravada) | Sempre coerente com o perfil atual; parâmetros em `config/metas.yaml` |
+| 2026-11-24 | Mifflin-St Jeor; perder −20%, ganhar +10%; proteína 1,6–2,0 g/kg; gordura 25% | Referências gerais para adultos; ajustáveis no YAML |
+| 2026-11-24 | Sem meta para menores de 18 anos | A fórmula é para adultos; o bot sugere nutricionista |
+| 2026-11-24 | Idade guardada com a data em que foi informada | A idade "envelhece" sozinha |
 
 ## Diário de sessões
 
@@ -114,3 +123,18 @@
   (a busca aproximada lê os 600 alimentos a cada item); o histórico perde o cache das
   mensagens porque o `<contexto>` só vai na mensagem atual; o bot às vezes faz 2 perguntas
   de uma vez; ele preencheu "08:00" num café da manhã contado à noite (razoável, mas observar).
+
+### 2026-11-24 — Sessão 2 (cont.): Fase 4, perfil e metas
+- Tabelas `consentimentos`, `perfis` e `historico_peso`; `app/nucleo/perfil.py`
+  (aceite, perfil parcial com validação, histórico de peso) e `app/nucleo/metas.py`.
+- Primeiro contato: boas-vindas fixas com o termo; prompt `config/prompt_onboarding.md`
+  e ferramenta `registrar_aceite`; ferramenta `atualizar_perfil` no modo normal.
+- Contexto da IA ganhou perfil, meta e o que falta; aba Banco mostra perfil, meta,
+  aceite e pesos.
+- 77 testes passando (16 novos). Marco conferido com a IA real: usuário novo foi de
+  "oi" a meta de 2.888 kcal (conferida à mão) em 5 mensagens; depois o bot mostrou
+  "616 de 2.888 kcal".
+- Calibrado na hora: "almocei" às 21h agora registra às 12:30 (antes pedia o horário);
+  "1 iogurte" = 1 pote (170 g).
+- Observar na Fase 7: o bot ainda faz 2 perguntas por mensagem às vezes; respostas um
+  pouco longas.
