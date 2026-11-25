@@ -5,10 +5,10 @@
 
 ## Agora
 
-- **Fase atual:** Fase 7, Calibragem (não iniciada). A 6.5 (fotos de verdade) terminou.
-- **Próximo passo:** transformar as 11 fotos e os exemplos dos requisitos em cenários de teste
-  automáticos (YAML + executor com relatório), para não perder a calibragem já feita.
-- **A conferir pelo Lucas:** gravar um áudio de verdade pelo microfone do simulador.
+- **Fase atual:** Fase 7, Calibragem (em andamento).
+- **Próximo passo:** Lucas testar o bot a fundo no simulador (conversas reais dele) e trazer o
+  que estranhar; viram cenários novos. Cenários de foto quando as fotos voltarem para
+  `cenarios/fotos/` (fora do Git).
 - **Bloqueios:** nenhum.
 
 ## Status das fases
@@ -24,7 +24,7 @@
 | 5 — Consultas e correções | ✅ Concluído |
 | 6 — Foto e áudio | ✅ Concluído |
 | 6.5 — Fotos de verdade | ✅ Concluído |
-| 7 — Calibragem | ⬜ Não iniciado |
+| 7 — Calibragem | 🟡 Em andamento |
 | 8 — WhatsApp | ⬜ Não iniciado |
 
 ## Decisões
@@ -101,6 +101,13 @@
 | 2026-11-25 | Open Food Facts só quando a IA informa `marca` | Nomes genéricos traziam produtos errados ("chocolate quente" → achocolatado em pó, 1.037 kcal) |
 | 2026-11-25 | Foto com um item só: o item é da pessoa | O bot perguntou "a lata é sua?" numa foto só da lata |
 | 2026-11-25 | Testes com a IA real sem mexer em arquivos do projeto durante a rodada | Criar arquivo no projeto recarrega o servidor no meio do teste (um pedido caiu no código antigo) |
+| 2026-11-25 | Foto: prato meio comido é estimado inteiro e gravado na hora (volta a valer a RN01) | Lucas: a foto dá contexto; a IA busca o valor mais real e a precisão vem das quantidades que a pessoa mandar |
+| 2026-11-25 | Cenários rodam dentro do processo, num banco temporário, sem servidor | Não mexe no `nutria.db` e não sofre com o recarregamento do servidor |
+| 2026-11-25 | Cenários conferem princípios (gravou, sem duplicar, quantas perguntas) e kcal em faixas largas | A IA nunca responde igual; conferir frases deixaria os testes frágeis |
+| 2026-11-25 | Trocar o alimento de um item atualiza a descrição | Achado nos cenários: o item virava frango e continuava "um bife" |
+| 2026-11-25 | Uma pergunta por resposta; perfil um dado por vez e nunca em duas respostas seguidas | Lucas pediu algo "saudável" para o uso longo (sem cravar regra rígida). O código decide quando pode pedir (linha "Pedido de perfil" no contexto); o prompt sozinho não segurava no Haiku |
+| 2026-11-25 | "Falta hoje para a meta" calculado e enviado no `<contexto>` | A IA fazia a subtração de cabeça (princípio: o código calcula) e economiza uma chamada de ferramenta |
+| 2026-11-25 | Duas chamadas de `registrar_refeicao` na mesma mensagem com o mesmo tipo e horário viram uma refeição | Visto nos cenários: "tomei café" gerava dois cafés da manhã |
 
 ## Diário de sessões
 
@@ -238,3 +245,24 @@
   (prompt), "rosquinha" (base), Open Food Facts só com `marca` (código + prompt).
 - Resultados detalhados em `Treinamento NutrIA/` (fora do Git).
 - 134 testes passando.
+
+### 2026-11-25 — Sessão 4: Fase 7, cenários de teste
+- Áudio real pelo microfone do simulador conferido pelo Lucas: funcionou.
+- Prompt: prato meio comido agora é estimado inteiro e gravado; convite opcional a mandar
+  quantidades quando a foto for incerta.
+- `cenarios/executar.py` (executor com relatório .md/.json em `cenarios/relatorios/`, filtros,
+  `--repetir`, `--modelo`/`--esforco`) e formato documentado em `cenarios/LEIAME.md`.
+- 24 cenários de texto (registro, correções, consultas, perfil, LGPD, limites) e um teste
+  grátis que valida o formato. 138 testes passando.
+- 1ª rodada (Haiku 5.5): 21/24, US$ 0,016 no total, ~2–3 s por mensagem (pior 6,6 s na 1ª).
+  Falhas: descrição do item não mudava ao trocar o alimento (corrigido no código); o bot faz
+  2 perguntas de perfil numa mensagem depois de registrar (a decidir); às vezes pergunta o
+  óbvio ("o arroz era uma porção normal?").
+- As fotos da 6.5 não estão mais no projeto: cenários de foto ficam para quando voltarem.
+- Lucas pediu perguntas "saudáveis" para o uso longo. Feito: 1 pergunta por resposta, exemplos
+  de pergunta ruim/boa no prompt, ritmo do perfil controlado pelo código, "falta hoje" pronto no
+  contexto, e refeições duplicadas na mesma mensagem juntadas. Novo cenário de um dia inteiro.
+- Rodada final (Haiku 5.5, 2× cada): **50/50**, 88 mensagens, US$ 0,035, média 2,2 s, pior 6,4 s.
+  140 testes passando.
+- Limite conhecido: o contador de perguntas conta "?" por frase; uma pergunta com explicação
+  e dois "?" conta como 2 (deixado rígido de propósito).

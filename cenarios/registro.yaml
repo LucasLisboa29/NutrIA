@@ -1,0 +1,172 @@
+# Registro de refeições por texto: os exemplos 1 e 2 dos requisitos e casos do dia a dia.
+cenarios:
+  - nome: almoco_basico
+    descricao: "Exemplo 1 dos requisitos: registra na hora, 3 itens, pergunta do bife (no máximo 1-2 perguntas)"
+    tags: [texto, registro, requisitos]
+    agora: "12:40"
+    conversa:
+      - usuario: almocei arroz feijão e um bife
+        espera:
+          ferramentas: [registrar_refeicao]
+          max_perguntas: 1
+          max_chamadas_ia: 2
+          max_linhas: 5
+          resposta_nao_contem: ["**", "# "]
+    final:
+      refeicoes:
+        - tipo: almoco
+          dia: hoje
+          itens: 3
+          kcal: [350, 800]
+          contem: [arroz, feijao, bife]
+      sem_estimativa_ia: true
+
+  - nome: bife_grande
+    descricao: "Exemplo 1 (continuação): 'grande' ajusta o bife sem duplicar a refeição"
+    tags: [texto, registro, correcao, requisitos]
+    agora: "12:40"
+    conversa:
+      - usuario: almocei arroz feijão e um bife
+      - usuario: grande
+        espera:
+          ferramentas: [atualizar_item]
+          sem_ferramentas: [registrar_refeicao]
+    final:
+      refeicoes:
+        - tipo: almoco
+          itens: 3
+          kcal: [450, 950]
+          item:
+            bife: {gramas: [140, 260]}
+
+  - nome: nao_responde_pergunta
+    descricao: "Exemplo 2: o usuário ignora a pergunta e pede o resumo; o almoço continua gravado"
+    tags: [texto, registro, consulta, requisitos]
+    agora: "12:40"
+    conversa:
+      - usuario: almocei arroz feijão e um bife
+      - usuario: quanto comi hoje?
+        espera:
+          sem_ferramentas: [registrar_refeicao, atualizar_item, apagar_item]
+          resposta_contem: [kcal]
+    final:
+      refeicoes:
+        - tipo: almoco
+          itens: 3
+
+  - nome: banana_sem_pergunta
+    descricao: "Óbvio não se pergunta (RN03): 'uma banana' grava direto, sem perguntar da banana"
+    tags: [texto, registro, perguntas]
+    agora: "16:10"
+    conversa:
+      - usuario: comi uma banana
+        espera:
+          ferramentas: [registrar_refeicao]
+          max_perguntas: 1  # nada sobre a banana; um dado do perfil é aceitável
+          resposta_nao_contem: ["tamanho da banana", "banana era", "que tipo de banana"]
+          max_chamadas_ia: 2
+          max_linhas: 3
+    final:
+      refeicoes:
+        - tipo: [avulso, lanche_da_tarde]
+          itens: 1
+          kcal: [60, 140]
+          contem: [banana]
+      sem_estimativa_ia: true
+
+  - nome: cafe_completo
+    descricao: "Café com vários itens e quantidades ditas pelo usuário (a quantidade dita vale)"
+    tags: [texto, registro]
+    agora: "08:15"
+    conversa:
+      - usuario: café da manhã foi 2 ovos mexidos, um pão francês com manteiga e um copo de leite
+        espera:
+          ferramentas: [registrar_refeicao]
+          max_perguntas: 1
+          max_chamadas_ia: 2
+    final:
+      refeicoes:
+        - tipo: cafe_da_manha
+          itens: [3, 4]
+          kcal: [380, 750]
+          contem: [ovo, pao, leite]
+          item:
+            ovo: {gramas: [80, 130]}
+      sem_estimativa_ia: true
+
+  - nome: pf_prato_feito
+    descricao: "Prato montado vai como um item e o sistema decompõe"
+    tags: [texto, registro]
+    agora: "13:00"
+    conversa:
+      - usuario: almocei um pf
+        espera:
+          ferramentas: [registrar_refeicao]
+          max_chamadas_ia: 2
+    final:
+      refeicoes:
+        - tipo: almoco
+          kcal: [500, 1200]
+      sem_estimativa_ia: true
+
+  - nome: refeicao_de_ontem
+    descricao: "Refeição passada ('ontem à noite') vai para o dia certo, como jantar"
+    tags: [texto, registro, datas]
+    agora: "09:00"
+    conversa:
+      - usuario: ontem à noite comi 2 fatias de pizza de calabresa
+        espera:
+          ferramentas: [registrar_refeicao]
+          max_perguntas: 1
+    final:
+      refeicoes:
+        - tipo: jantar
+          dia: ontem
+          kcal: [350, 900]
+          contem: [pizza]
+
+  - nome: almoco_contado_a_noite
+    descricao: "'Almocei' às 21h vai para hoje no horário do almoço, sem perguntar o horário"
+    tags: [texto, registro, datas]
+    agora: "21:00"
+    conversa:
+      - usuario: esqueci de falar, almocei macarrão com frango
+        espera:
+          ferramentas: [registrar_refeicao]
+          resposta_nao_contem: ["que horas", "qual horário", "qual horario"]
+    final:
+      refeicoes:
+        - tipo: almoco
+          dia: hoje
+          contem: [macarrao, frango]
+
+  - nome: intencao_futura
+    descricao: "'Vou jantar' não é registro: no máximo consulta"
+    tags: [texto, registro, consulta]
+    agora: "18:00"
+    conversa:
+      - usuario: vou jantar um hambúrguer hoje, quantas calorias tem mais ou menos?
+        espera:
+          sem_ferramentas: [registrar_refeicao]
+          resposta_contem: [kcal]
+    final:
+      refeicoes: []
+
+  - nome: caneca_aprendida
+    descricao: "Memória do usuário: ensina a caneca e depois a medida dele vale no registro"
+    tags: [texto, memoria]
+    agora: "07:30"
+    conversa:
+      - usuario: minha caneca tem uns 350 ml
+        espera:
+          ferramentas: [ensinar_medida]
+          sem_ferramentas: [registrar_refeicao]
+      - usuario: tomei uma caneca de café com leite
+        espera:
+          ferramentas: [registrar_refeicao]
+    final:
+      medidas: {caneca: 350}
+      refeicoes:
+        - tipo: [cafe_da_manha, avulso]
+          itens: [1, 2]
+          kcal: [60, 260]

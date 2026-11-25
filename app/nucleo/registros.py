@@ -4,12 +4,13 @@ Usado para montar o contexto que vai para a IA a cada mensagem, para a aba "Banc
 simulador e, na Fase 5, para os resumos.
 """
 
+import re
 from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.banco.modelos import ItemRefeicao, Refeicao, Usuario
+from app.banco.modelos import ItemRefeicao, Mensagem, Refeicao, Usuario
 from app.tempo import DIAS_DA_SEMANA, agora, fuso_local, para_local
 
 TIPOS = {
@@ -66,7 +67,21 @@ def texto_contexto_minimo() -> str:
     )
 
 
-def _linhas_perfil(usuario: Usuario) -> list[str]:
+# Palavras que indicam que o bot pediu um dado do perfil (para não pedir de novo em seguida).
+_PEDIU_PERFIL = re.compile(
+    r"idade|anos voc|quantos anos|peso|pesa|altura|mede|f[oó]rmula|homem ou mulher|mulher ou homem|"
+    r"exercita|treina|atividade f[ií]sica|objetivo|perder, manter|seu nome|te chamar",
+    re.IGNORECASE,
+)
+
+
+def pediu_perfil(texto: str) -> bool:
+    """A resposta tem uma pergunta sobre o perfil? Olha só as frases que terminam em "?"."""
+    perguntas = re.findall(r"[^.!?\n]*\?", texto or "")
+    return any(_PEDIU_PERFIL.search(p) for p in perguntas)
+
+
+def _linhas_perfil(db: Session, usuario: Usuario) -> list[str]:
     from app.nucleo import metas, perfil  # import aqui evita import circular
 
     dados = perfil.como_dict(usuario.perfil)
@@ -84,6 +99,21 @@ def _linhas_perfil(usuario: Usuario) -> list[str]:
         linhas.append(f"Sem meta: {meta.motivo}")
     else:
         linhas.append("Sem meta ainda. Falta no perfil: " + ", ".join(meta.faltando))
+        # Ritmo dos pedidos (para o usuário não cansar): o código decide QUANDO pode pedir,
+        # a IA decide COMO. O prompt sozinho não segurava: o Haiku pedia 2 dados por vez e
+        # repetia o mesmo pedido na mensagem seguinte (visto nos cenários da Fase 7).
+        ultima = db.scalar(
+            select(Mensagem.texto)
+            .where(Mensagem.usuario_id == usuario.id, Mensagem.direcao == "saida")
+            .order_by(Mensagem.id.desc())
+            .limit(1)
+        )
+        if pediu_perfil(ultima or ""):
+            linhas.append("Pedido de perfil: NÃO peça dado do perfil nesta resposta (você pediu na anterior).")
+        else:
+            linhas.append(
+                f"Pedido de perfil: se a resposta não tiver outra pergunta, pode pedir só um dado: {meta.faltando[0]}."
+            )
     return linhas
 
 
@@ -114,7 +144,7 @@ def texto_contexto(db: Session, usuario: Usuario) -> str:
     linhas = [
         "<contexto>",
         f"Agora: {DIAS_DA_SEMANA[momento.weekday()]}, {momento:%d/%m/%Y %H:%M} (horário de Brasília).",
-        *_linhas_perfil(usuario),
+        *_linhas_perfil(db, usuario),
         *_linhas_memoria(db, usuario),
     ]
     refeicoes = refeicoes_do_dia(db, usuario, momento.date())
@@ -139,6 +169,15 @@ def texto_contexto(db: Session, usuario: Usuario) -> str:
             f"Total de hoje: {t['kcal']:.0f} kcal | proteína {t['proteina']:.0f} g | "
             f"carboidrato {t['carboidrato']:.0f} g | gordura {t['gordura']:.0f} g"
         )
+        meta = _meta_do_usuario(usuario)
+        if meta:
+            # A conta do "quanto falta" sai pronta: sem isto, a IA subtraía de cabeça.
+            falta = {k: meta[k] - t[k] for k in ("kcal", "proteina", "carboidrato", "gordura")}
+            linhas.append(
+                "Falta hoje para a meta (negativo = passou): "
+                f"{falta['kcal']:.0f} kcal | proteína {falta['proteina']:.0f} g | "
+                f"carboidrato {falta['carboidrato']:.0f} g | gordura {falta['gordura']:.0f} g"
+            )
     linhas.append("</contexto>")
     return "\n".join(linhas)
 

@@ -9,7 +9,7 @@ saem sempre do módulo de nutrição; a IA só informa o que e quanto foi comido
 """
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
@@ -34,6 +34,9 @@ class Contexto:
     canal: str = "simulador"
     mensagem_id: int = 0  # id da mensagem do usuário que está sendo respondida
     usuario_apagado: bool = False  # vira True depois de apagar_meus_dados
+    # Refeições criadas nesta mensagem, por (tipo, horário): se a IA chamar registrar_refeicao
+    # duas vezes para a mesma refeição, os itens vão para a mesma (visto nos cenários).
+    refeicoes_criadas: dict = field(default_factory=dict)
 
 
 class ErroFerramenta(ValueError):
@@ -474,6 +477,9 @@ def atualizar_item(ctx: Contexto, args: dict) -> dict:
         calculado = calculados[0]
 
     item.quantidade, item.unidade, item.tamanho = novo["quantidade"], novo["unidade"], novo["tamanho"]
+    if args.get("alimento"):
+        # Trocou o alimento: a descrição antiga ("um bife") ficaria mentindo no item novo.
+        item.descricao = str(args.get("descricao") or args["alimento"])[:120]
     _copiar_valores(item, calculado)
     ctx.db.commit()
 
@@ -664,9 +670,16 @@ def _obter_ou_criar_refeicao(ctx: Contexto, args: dict) -> Refeicao:
     tipo = args.get("tipo")
     if tipo not in registros.TIPOS:
         raise ErroFerramenta(f"tipo inválido: {tipo!r}. Use um de {list(registros.TIPOS)}.")
-    refeicao = Refeicao(usuario_id=ctx.usuario.id, tipo=tipo, data_hora=_quando(args.get("quando")))
+    data_hora = _quando(args.get("quando"))
+    chave = (tipo, data_hora.replace(second=0, microsecond=0))
+    if chave in ctx.refeicoes_criadas:
+        existente = ctx.db.get(Refeicao, ctx.refeicoes_criadas[chave])
+        if existente is not None:
+            return existente
+    refeicao = Refeicao(usuario_id=ctx.usuario.id, tipo=tipo, data_hora=data_hora)
     ctx.db.add(refeicao)
     ctx.db.flush()  # gera o id
+    ctx.refeicoes_criadas[chave] = refeicao.id
     return refeicao
 
 

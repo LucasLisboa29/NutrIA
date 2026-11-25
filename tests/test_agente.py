@@ -108,6 +108,32 @@ def test_resposta_a_pergunta_atualiza_sem_duplicar(cliente, ia_falsa):
     assert resultado["antes"]["gramas"] == 100 and resultado["depois"]["gramas"] == 140
 
 
+def test_trocar_o_alimento_atualiza_a_descricao(cliente, ia_falsa):
+    # Achado nos cenários da Fase 7: o item virava frango, mas a descrição seguia "um bife".
+    ia_falsa.roteiro = [ALMOCO, "Anotado!"]
+    enviar(cliente, "almocei arroz, feijão e um bife")
+    bife_id = itens_do_banco(cliente)[2]["id"]
+
+    ia_falsa.roteiro = [("atualizar_item", {"item_id": bife_id, "alimento": "peito de frango grelhado"}), "Trocado!"]
+    enviar(cliente, "era peito de frango grelhado")
+
+    item = itens_do_banco(cliente)[2]
+    assert "frango" in item["descricao"].lower() and "bife" not in item["descricao"].lower()
+
+
+def test_duas_chamadas_na_mesma_mensagem_viram_uma_refeicao(cliente, ia_falsa):
+    # Achado nos cenários: a IA registrou o café da manhã e, numa 2ª chamada, o café (bebida),
+    # e o usuário ficou com dois "cafés da manhã" no mesmo horário.
+    cafe = {"tipo": "cafe_da_manha", "itens": [{"descricao": "ovo", "alimento": "ovo cozido"}]}
+    bebida = {"tipo": "cafe_da_manha", "itens": [{"descricao": "café", "alimento": "café"}]}
+    ia_falsa.roteiro = [[("registrar_refeicao", cafe), ("registrar_refeicao", bebida)], "Anotado!"]
+    enviar(cliente, "tomei café, comi 1 ovo cozido")
+
+    dias = cliente.get(f"/simulador/banco/{ANA}").json()["dias"]
+    refeicoes = [r for d in dias for r in d["refeicoes"]]
+    assert len(refeicoes) == 1 and len(refeicoes[0]["itens"]) == 2
+
+
 def test_contexto_tem_os_ids_e_o_historico_vai_junto(cliente, ia_falsa):
     ia_falsa.roteiro = [ALMOCO, "O bife era grande?"]
     enviar(cliente, "almocei arroz, feijão e um bife")

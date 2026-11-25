@@ -194,3 +194,13 @@ def test_contexto_avisa_a_ia_do_pedido_de_apagar_pendente(cliente, ia_falsa):
     ia_falsa.roteiro = ["Ok, não apago."]
     enviar(cliente, "deixa pra lá", SEGUNDA.replace(hour=13, minute=1))
     assert "aguardando confirmação" in ia_falsa.pedidos[-1]["mensagens"][-1].contexto
+
+
+def test_pediu_perfil_reconhece_pedidos_so_em_perguntas():
+    from app.nucleo.registros import pediu_perfil
+
+    assert pediu_perfil("Anotado! Me conta sua idade e seu peso atual?")
+    assert pediu_perfil("Registrei. Pra conta do gasto calórico, uso a fórmula feminina ou masculina?")
+    assert not pediu_perfil("Anotado! O bife era grande?")
+    # Falar do peso sem perguntar não conta como pedido.
+    assert not pediu_perfil("Anotei seu peso de 80 kg. 💪")

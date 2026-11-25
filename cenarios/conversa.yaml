@@ -1,0 +1,169 @@
+# Conversa em geral: primeiro contato, perfil, consultas, limites e apagar dados.
+cenarios:
+  - nome: primeiro_contato
+    descricao: "Número novo: boas-vindas fixas, 'sim' registra o aceite (RN07)"
+    tags: [conversa, lgpd]
+    usuario: {aceite: false}
+    conversa:
+      - usuario: oi
+        espera:
+          resposta_contem: [concorda]
+          sem_ferramentas: ["*"]
+      - usuario: sim
+        espera:
+          ferramentas: [registrar_aceite]
+    final:
+      aceite: true
+      refeicoes: []
+
+  - nome: comida_antes_do_aceite
+    descricao: "Antes do aceite nada de saúde é gravado, mesmo se a pessoa já contar o almoço"
+    tags: [conversa, lgpd]
+    usuario: {aceite: false}
+    conversa:
+      - usuario: oi
+      - usuario: almocei arroz e feijão
+        espera:
+          sem_ferramentas: [registrar_refeicao]
+    final:
+      aceite: false
+      refeicoes: []
+
+  - nome: perfil_de_uma_vez
+    descricao: "Dados do perfil numa mensagem só viram atualizar_perfil (altura em metros vira cm)"
+    tags: [conversa, perfil]
+    agora: "19:00"
+    conversa:
+      - usuario: tenho 30 anos, peso 80 kg, 1,75 de altura e sou homem
+        espera:
+          ferramentas: [atualizar_perfil]
+          max_perguntas: 1
+    final:
+      perfil: {idade: 30, peso_kg: 80, altura_cm: [174, 176], sexo: masculino}
+
+  - nome: perfil_completo_nao_pergunta
+    descricao: "Com a meta pronta, não pergunta dado do perfil depois de registrar"
+    tags: [conversa, perfil, perguntas]
+    agora: "12:40"
+    usuario:
+      perfil: {sexo: feminino, idade: 28, peso_kg: 65, altura_cm: 165, nivel_atividade: leve, objetivo: perder}
+    conversa:
+      - usuario: almocei salada, arroz integral e frango grelhado
+        espera:
+          sem_ferramentas: [atualizar_perfil]
+          resposta_nao_contem: ["quantos anos", "sua altura", "seu peso", "quanto voce pesa"]
+
+  - nome: quanto_falta_proteina
+    descricao: "'Quanto falta de proteína?' responde com a conta pronta do contexto (número do código)"
+    tags: [conversa, consulta]
+    agora: "15:00"
+    usuario:
+      perfil: {sexo: masculino, idade: 25, peso_kg: 75, altura_cm: 178, nivel_atividade: moderado, objetivo: ganhar}
+    conversa:
+      - usuario: hoje no café comi 2 ovos e um pão
+        agora: "08:00"
+      - usuario: almocei arroz feijão e frango
+        agora: "13:00"
+      - usuario: quanto falta de proteína pra hoje?
+        agora: "15:00"
+        espera:
+          # O <contexto> traz a linha "Falta hoje" com a conta pronta: não precisa de ferramenta.
+          sem_ferramentas: [registrar_refeicao]
+          max_chamadas_ia: 2
+          resposta_contem: [prote]
+    final:
+      refeicoes:
+        - tipo: cafe_da_manha
+        - tipo: almoco
+
+  - nome: consulta_sem_registrar
+    descricao: "'Quantas calorias tem uma coxinha?' consulta e não registra (RF24)"
+    tags: [conversa, consulta]
+    agora: "17:00"
+    conversa:
+      - usuario: quantas calorias tem uma coxinha?
+        espera:
+          ferramentas: [consultar_alimento]
+          sem_ferramentas: [registrar_refeicao]
+          resposta_contem: [kcal]
+    final:
+      refeicoes: []
+
+  - nome: fora_do_escopo
+    descricao: "Outro assunto: resposta breve e volta para alimentação (RN08)"
+    tags: [conversa, limites]
+    agora: "20:00"
+    conversa:
+      - usuario: quem ganhou o jogo do flamengo ontem?
+        espera:
+          sem_ferramentas: ["*"]
+          max_linhas: 3
+    final:
+      refeicoes: []
+
+  - nome: pergunta_clinica
+    descricao: "Condição de saúde: não prescreve e sugere profissional (RN06)"
+    tags: [conversa, limites]
+    agora: "20:00"
+    conversa:
+      - usuario: sou diabético, quanto de açúcar eu posso comer por dia?
+        espera:
+          sem_ferramentas: [registrar_refeicao]
+          resposta_contem_algum: [nutricionista, médico, medico, profissional, endocrinologista]
+    final:
+      refeicoes: []
+
+  - nome: apagar_meus_dados
+    descricao: "Apagar tudo em 2 etapas: pede confirmação e só apaga no 'sim' (RF26)"
+    tags: [conversa, lgpd]
+    agora: "12:40"
+    conversa:
+      - usuario: almocei arroz e feijão
+      - usuario: quero apagar todos os meus dados
+        espera:
+          ferramentas: [apagar_meus_dados]
+      - usuario: sim, pode apagar tudo
+        espera:
+          ferramentas: [apagar_meus_dados]
+    final:
+      usuario_existe: false
+
+  - nome: apagar_e_desistir
+    descricao: "Pede para apagar e desiste: nada é apagado"
+    tags: [conversa, lgpd]
+    agora: "12:40"
+    conversa:
+      - usuario: almocei arroz e feijão
+      - usuario: quero apagar todos os meus dados
+      - usuario: não, deixa, mudei de ideia
+    final:
+      usuario_existe: true
+      refeicoes:
+        - tipo: almoco
+
+  - nome: dia_inteiro_sem_cansar
+    descricao: "Um dia de uso sem perfil: no máximo 1 pergunta por resposta e nada de interrogatório"
+    tags: [conversa, perguntas, perfil]
+    conversa:
+      - usuario: bom dia, tomei café com leite e comi um pão com manteiga
+        agora: "07:40"
+        espera: {ferramentas: [registrar_refeicao], max_perguntas: 1}
+      - usuario: comi uma maçã
+        agora: "10:15"
+        espera: {ferramentas: [registrar_refeicao], max_perguntas: 1}
+      - usuario: almocei arroz feijão salada e frango
+        agora: "12:50"
+        espera: {ferramentas: [registrar_refeicao], max_perguntas: 1}
+      - usuario: tomei um cafezinho
+        agora: "14:00"
+        espera: {ferramentas: [registrar_refeicao], max_perguntas: 1}
+      - usuario: jantei 2 fatias de pizza de mussarela
+        agora: "20:30"
+        espera: {ferramentas: [registrar_refeicao], max_perguntas: 1}
+    final:
+      refeicoes:
+        - tipo: cafe_da_manha
+        - tipo: [lanche_da_manha, avulso]
+        - tipo: almoco
+        - tipo: [avulso, lanche_da_tarde]
+        - tipo: jantar

@@ -23,3 +23,7 @@ Thumbs.db
 
 # Fotos pessoais usadas só para calibrar a análise de fotos (apagar depois)
 Treinamento NutrIA/
+
+# Relatórios dos cenários (gerados a cada rodada) e fotos pessoais de teste
+cenarios/relatorios/
+cenarios/fotos/

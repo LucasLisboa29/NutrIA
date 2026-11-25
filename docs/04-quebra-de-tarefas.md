@@ -164,9 +164,9 @@ NutrIA/
 
 ## Fase 7 — Calibragem
 
-- [ ] Formato de cenário de teste (YAML: mensagens do usuário + o que deve estar gravado no fim) [RF34] · M
-- [ ] Executor de cenários com relatório (passou/falhou, custo, tempo) · G
-- [ ] Escrever ~30 cenários cobrindo os exemplos dos requisitos e casos difíceis · G
+- [x] Formato de cenário de teste (YAML: mensagens do usuário + o que deve estar gravado no fim) [RF34] · M (`cenarios/LEIAME.md`)
+- [x] Executor de cenários com relatório (passou/falhou, custo, tempo) · G (`python -m cenarios.executar`)
+- [ ] Escrever ~30 cenários cobrindo os exemplos dos requisitos e casos difíceis · G (25 de texto feitos; faltam os de foto, que dependem das fotos)
 - [ ] Comparar modelos e esforço por rota (Haiku × Sonnet × Opus): tabela velocidade × custo × acerto · M
 - [ ] Ajustar o prompt e as regras de pergunta com base nas conversas reais de teste · G
 - [ ] Definir metas numéricas de tempo de resposta e de custo por refeição · P

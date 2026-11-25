@@ -1,0 +1,70 @@
+# Correções: exemplo 3 dos requisitos, apagar item e mudar tipo/data da refeição.
+cenarios:
+  - nome: correcao_ovos
+    descricao: "Exemplo 3: '2 ovos, não 1' corrige o item sem duplicar"
+    tags: [texto, correcao, requisitos]
+    agora: "08:00"
+    conversa:
+      - usuario: tomei café, comi 1 ovo cozido e um pão francês
+      - usuario: no café foram 2 ovos, não 1
+        agora: "10:30"
+        espera:
+          ferramentas: [atualizar_item]
+          sem_ferramentas: [registrar_refeicao]
+          max_perguntas: 0
+    final:
+      refeicoes:
+        - tipo: cafe_da_manha
+          itens: [2, 3]  # "tomei café" pode virar também o café (bebida): ok
+          item:
+            ovo: {gramas: [80, 130]}
+
+  - nome: apagar_suco
+    descricao: "'Apaga o suco' remove só o suco"
+    tags: [texto, correcao]
+    agora: "12:50"
+    conversa:
+      - usuario: almocei arroz, feijão, frango grelhado e um copo de suco de laranja
+      - usuario: apaga o suco, não tomei não
+        espera:
+          ferramentas: [apagar_item]
+          sem_ferramentas: [registrar_refeicao]
+    final:
+      refeicoes:
+        - tipo: almoco
+          itens: 3
+          contem: [arroz, feijao, frango]
+          nao_contem: [suco]
+
+  - nome: trocar_para_jantar_de_ontem
+    descricao: "'Isso foi ontem na janta' muda tipo e data sem duplicar"
+    tags: [texto, correcao, datas]
+    agora: "10:00"
+    conversa:
+      - usuario: comi um x-tudo
+      - usuario: ah, isso foi ontem na janta
+        espera:
+          ferramentas: [alterar_refeicao]
+          sem_ferramentas: [registrar_refeicao]
+    final:
+      refeicoes:
+        - tipo: jantar
+          dia: ontem
+          itens: [1, 8]
+
+  - nome: troca_de_alimento
+    descricao: "'Era peito de frango, não bife' troca o alimento do item"
+    tags: [texto, correcao]
+    agora: "12:40"
+    conversa:
+      - usuario: almocei arroz e um bife
+      - usuario: na verdade não era bife, era peito de frango grelhado
+        espera:
+          ferramentas: [atualizar_item]
+          sem_ferramentas: [registrar_refeicao]
+    final:
+      refeicoes:
+        - tipo: almoco
+          itens: 2
+          contem: [arroz, frango]
+          nao_contem: [bife]
