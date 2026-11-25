@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     timezone: str = "America/Sao_Paulo"
     # Onde ficam as fotos e áudios recebidos (fora do Git, ver .gitignore).
     pasta_uploads: Path = RAIZ / "uploads"
+    # Consultar o Open Food Facts (internet) para produtos de marca. Os testes desligam.
+    openfoodfacts_ativo: bool = True
 
 
 @lru_cache

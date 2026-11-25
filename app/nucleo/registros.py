@@ -87,6 +87,23 @@ def _linhas_perfil(usuario: Usuario) -> list[str]:
     return linhas
 
 
+def _linhas_memoria(db: Session, usuario: Usuario) -> list[str]:
+    """O que o bot aprendeu sobre a pessoa (camada 1): medidas, alimentos e hábitos."""
+    from app.nucleo import memoria  # import aqui evita import circular
+
+    linhas = []
+    if usuario.medidas:
+        linhas.append("Medidas do usuário: " + "; ".join(f"{m.unidade} = {m.gramas:g} g/ml" for m in usuario.medidas))
+    if usuario.alimentos_proprios:
+        linhas.append("Alimentos do usuário: " + "; ".join(
+            f"{a.nome} (porção {a.porcao_g:g} g)" for a in usuario.alimentos_proprios))
+    frequentes = memoria.itens_frequentes(db, usuario)
+    if frequentes:
+        linhas.append("Itens frequentes (30 dias): " + "; ".join(
+            f"{f['alimento']}, {f['medida']} ({f['vezes']}x)" for f in frequentes))
+    return linhas
+
+
 def texto_contexto(db: Session, usuario: Usuario) -> str:
     """O "bilhete" que vai junto de cada mensagem do usuário para a IA.
 
@@ -98,6 +115,7 @@ def texto_contexto(db: Session, usuario: Usuario) -> str:
         "<contexto>",
         f"Agora: {DIAS_DA_SEMANA[momento.weekday()]}, {momento:%d/%m/%Y %H:%M} (horário de Brasília).",
         *_linhas_perfil(usuario),
+        *_linhas_memoria(db, usuario),
     ]
     refeicoes = refeicoes_do_dia(db, usuario, momento.date())
     if not refeicoes:

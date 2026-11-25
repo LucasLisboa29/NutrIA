@@ -5,9 +5,9 @@
 
 ## Agora
 
-- **Fase atual:** Fase 6.5, Fotos de verdade (Etapa 1 concluída)
-- **Próximo passo:** Etapa 2: medidas e alimentos do usuário ("minha caneca = 350 ml"),
-  fila de revisão das estimativas da IA e Open Food Facts para produtos de marca.
+- **Fase atual:** Fase 6.5, Fotos de verdade (Etapas 1 e 2 concluídas)
+- **Próximo passo:** Etapa 3: rodar as 11 fotos de `Treinamento NutrIA/` no app real e medir
+  (itens certos, erro de kcal ≤ 25%, zero trocas graves, ≤ 2 chamadas, ≤ 10 s, ≤ US$ 0,002).
 - **A conferir pelo Lucas:** gravar um áudio de verdade pelo microfone do simulador.
 - **Material de calibragem:** fotos e análise em `Treinamento NutrIA/` (fora do Git, fotos
   pessoais). Apagar a pasta quando a calibragem das fotos terminar (pedido do Lucas).
@@ -25,7 +25,7 @@
 | 4 — Perfil e metas | ✅ Concluído |
 | 5 — Consultas e correções | ✅ Concluído |
 | 6 — Foto e áudio | ✅ Concluído |
-| 6.5 — Fotos de verdade | 🟡 Etapa 1 de 3 concluída |
+| 6.5 — Fotos de verdade | 🟡 Etapas 1 e 2 de 3 concluídas |
 | 7 — Calibragem | ⬜ Não iniciado |
 | 8 — WhatsApp | ⬜ Não iniciado |
 
@@ -92,6 +92,12 @@
 | 2026-11-24 | Foto: item que não dá para identificar não é registrado; o bot pergunta. Gordura/ossos/restos não contam | Na simulação, gordura da carne virou "banana frita" |
 | 2026-11-24 | Prato meio comido: perguntar antes de registrar (exceção à RN01) | O que aparece é o que sobrou, não o que foi comido |
 | 2026-11-24 | Tipo "ao longo do dia" (`avulso`) e não falar de horário para bebidas e beliscos | Lucas: pessoas comuns não têm hábitos metódicos |
+| 2026-11-24 | Medidas e alimentos do usuário (camada 1) com prioridade sobre as genéricas | Pedido do Lucas ("minha caneca"); reconhecer o recipiente pela foto não é confiável, então ele ensina uma vez |
+| 2026-11-24 | Fila de revisão anônima (sem `usuario_id`) | Para cadastrar não importa quem pediu; apagar dados (LGPD) não mexe nela |
+| 2026-11-24 | Open Food Facts pela API nova (search.openfoodfacts.org), com cache e timeout de 5 s | A antiga (cgi/search.pl) devolvia 503; internet fora do ar não pode travar o registro |
+| 2026-11-24 | Produto do OFF de outro país = confiança baixa e perde para o rótulo lido na foto | Cobertura brasileira pequena; o Monster Ultra achado era o australiano |
+| 2026-11-24 | Embalagem só vira porção se for individual (≤ 600 g/ml) | "1 lata de Toddy" virava 1 kg (4.000 kcal) |
+| 2026-11-24 | Testes com OFF desligado (`OPENFOODFACTS_ATIVO=false`) e API falsa | Testes não podem depender da internet (um teste achou "sushi" no OFF real) |
 
 ## Diário de sessões
 
@@ -202,3 +208,20 @@
 - Resultado na simulação: itens com número da IA caíram de 6 para 1; lasanha 255 → 610 kcal,
   rosquinhas 136 (feijão) → 305 (rosca doce), torta 51 → 306 kcal.
 - 117 testes passando.
+
+### 2026-11-24 — Sessão 2 (cont.): Fase 6.5, Etapa 2 (base própria e aprendizado)
+- Base de alimentos em camadas no código: usuário → TACO + Base NutrIA → Open Food Facts →
+  estimativa da IA (que entra na fila de revisão).
+- Memória do usuário (`app/nucleo/memoria.py`): ferramentas `ensinar_medida` e
+  `ensinar_alimento` (rótulo ou receita dele); medidas, alimentos e itens frequentes vão no
+  `<contexto>`.
+- Fila de revisão (`app/nucleo/revisao.py`) com aba "Revisão" no simulador (marcar como
+  cadastrado/ignorado).
+- Open Food Facts (`app/nutricao/openfoodfacts.py`) com cache, preferência por produto do
+  Brasil e trava de "embalagem individual".
+- 131 testes. Teste com a IA real: "minha caneca tem 350 ml" → guardado; "uma caneca de
+  achocolatado" → 350 ml (290 kcal), como "ao longo do dia".
+- Observado: com a busca mais rígida, nomes longos ("achocolatado em pó preparado com
+  leite") não são achados e a IA tenta de novo (1 chamada a mais). Medir na Etapa 3.
+- Os testes ficaram mais lentos (~50 s): cada teste reimporta os 611 alimentos. Otimizar
+  depois (carregar a base uma vez por rodada).

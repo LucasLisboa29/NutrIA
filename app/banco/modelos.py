@@ -48,6 +48,8 @@ class Usuario(Base):
     consentimentos: Mapped[list["Consentimento"]] = relationship(
         cascade="all, delete-orphan", order_by="Consentimento.aceito_em"
     )
+    medidas: Mapped[list["MedidaUsuario"]] = relationship(cascade="all, delete-orphan")
+    alimentos_proprios: Mapped[list["AlimentoUsuario"]] = relationship(cascade="all, delete-orphan")
 
 
 class Mensagem(Base):
@@ -197,3 +199,94 @@ class HistoricoPeso(Base):
     usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"), index=True)
     peso_kg: Mapped[float] = mapped_column(Float)
     registrado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+
+
+# ---------- Etapa 2 das fotos: base própria e aprendizado ----------
+
+
+class MedidaUsuario(Base):
+    """Uma medida que o usuário ensinou: "minha caneca tem 350 ml" (camada 1 da base).
+
+    Vale só para ele e tem prioridade sobre as medidas genéricas de `porcoes.yaml`.
+    """
+
+    __tablename__ = "medidas_usuario"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"), index=True)
+    unidade: Mapped[str] = mapped_column(String(40))  # já normalizada: "caneca", "pote do trabalho"
+    gramas: Mapped[float] = mapped_column(Float)  # ou ml (1 ml ~ 1 g)
+    descricao: Mapped[str] = mapped_column(String(120), default="")
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+
+
+class AlimentoUsuario(Base):
+    """Um alimento que o usuário ensinou (rótulo de um produto, receita dele).
+
+    Valores por 100 g, como na TACO. `porcao_g` é a porção que ele costuma comer.
+    """
+
+    __tablename__ = "alimentos_usuario"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id", ondelete="CASCADE"), index=True)
+    nome: Mapped[str] = mapped_column(String(120))
+    nome_busca: Mapped[str] = mapped_column(String(120), index=True)
+    porcao_g: Mapped[float] = mapped_column(Float)
+    kcal: Mapped[float] = mapped_column(Float)
+    proteina: Mapped[float] = mapped_column(Float)
+    carboidrato: Mapped[float] = mapped_column(Float)
+    gordura: Mapped[float] = mapped_column(Float)
+    fibra: Mapped[float] = mapped_column(Float, default=0)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+
+
+class RevisaoAlimento(Base):
+    """Fila de revisão: alimentos que a base não tinha e a IA precisou estimar.
+
+    Cada linha é uma tarefa de cadastro para a Base NutrIA; `vezes` diz o que é mais
+    pedido. Não guarda QUEM pediu (é anônima): para cadastrar um alimento isso não
+    importa, e assim apagar os dados de um usuário (LGPD) não mexe aqui.
+    """
+
+    __tablename__ = "revisao_alimentos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    termo: Mapped[str] = mapped_column(String(120), unique=True)  # normalizado
+    exemplo: Mapped[str] = mapped_column(String(120))  # como a IA escreveu
+    vezes: Mapped[int] = mapped_column(Integer, default=1)
+    ultima_estimativa: Mapped[str] = mapped_column(Text, default="")  # JSON por porção
+    status: Mapped[str] = mapped_column(String(12), default="pendente")  # pendente, cadastrado, ignorado
+    primeiro_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+    ultimo_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+
+
+class ProdutoOFF(Base):
+    """Produto de marca vindo do Open Food Facts (cache local). Valores por 100 g.
+
+    Dados © Open Food Facts contributors, licença ODbL (precisa citar a fonte).
+    """
+
+    __tablename__ = "produtos_off"
+
+    codigo: Mapped[str] = mapped_column(String(32), primary_key=True)  # código de barras
+    nome: Mapped[str] = mapped_column(String(160))
+    marca: Mapped[str] = mapped_column(String(120), default="")
+    quantidade_g: Mapped[float | None] = mapped_column(Float)  # conteúdo da embalagem (473 ml)
+    kcal: Mapped[float] = mapped_column(Float)
+    proteina: Mapped[float] = mapped_column(Float)
+    carboidrato: Mapped[float] = mapped_column(Float)
+    gordura: Mapped[float] = mapped_column(Float)
+    fibra: Mapped[float] = mapped_column(Float, default=0)
+    do_brasil: Mapped[bool] = mapped_column(Boolean, default=False)  # vendido no Brasil?
+    buscado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)
+
+
+class BuscaOFF(Base):
+    """Cache das buscas no Open Food Facts: termo -> produto (ou nada encontrado)."""
+
+    __tablename__ = "buscas_off"
+
+    termo: Mapped[str] = mapped_column(String(120), primary_key=True)
+    codigo: Mapped[str | None] = mapped_column(String(32))  # None = procurou e não achou
+    buscado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=agora)

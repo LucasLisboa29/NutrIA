@@ -336,6 +336,7 @@ for (const aba of document.querySelectorAll(".aba")) {
       $(`aba-${outra.dataset.aba}`).hidden = !ativa;
     }
     if (aba.dataset.aba === "banco") carregarBanco();
+    if (aba.dataset.aba === "revisao") carregarRevisao();
   });
 }
 
@@ -443,7 +444,7 @@ async function carregarBanco() {
 const ROTULOS = { nome: "Nome", sexo: "Sexo", idade: "Idade", peso_kg: "Peso (kg)", altura_cm: "Altura (cm)",
   nivel_atividade: "Atividade", objetivo: "Objetivo" };
 
-function cartaoPerfil({ perfil, meta, aceite, pesos }) {
+function cartaoPerfil({ perfil, meta, aceite, pesos, medidas, alimentos_proprios, frequentes }) {
   const cartao = document.createElement("div");
   cartao.className = "cartao-perfil";
 
@@ -478,6 +479,18 @@ function cartaoPerfil({ perfil, meta, aceite, pesos }) {
   }
   cartao.append(linhaMeta);
 
+  // O que o bot aprendeu sobre a pessoa (Etapa 2).
+  const aprendido = [];
+  for (const [nome, gramas] of Object.entries(medidas || {})) aprendido.push(`📏 ${nome} = ${gramas} g/ml`);
+  for (const a of alimentos_proprios || []) aprendido.push(`🥫 ${a.nome} (porção ${a.porcao_g} g, ${a.kcal_porcao} kcal)`);
+  for (const f of frequentes || []) aprendido.push(`🔁 ${f.alimento}, ${f.medida} (${f.vezes}x)`);
+  if (aprendido.length) {
+    const linha = document.createElement("p");
+    linha.className = "macros";
+    linha.textContent = "Aprendido: " + aprendido.join(" · ");
+    cartao.append(linha);
+  }
+
   if (pesos?.length) {
     const linhaPesos = document.createElement("p");
     linhaPesos.className = "macros";
@@ -485,6 +498,43 @@ function cartaoPerfil({ perfil, meta, aceite, pesos }) {
     cartao.append(linhaPesos);
   }
   return cartao;
+}
+
+// ---------- Painel: fila de revisão (Etapa 2) ----------
+
+async function carregarRevisao() {
+  const itens = await (await fetch("/simulador/revisao")).json();
+  const alvo = $("revisao");
+  alvo.innerHTML = "";
+  if (!itens.length) {
+    alvo.innerHTML = '<p class="dica">Nada pendente: a base encontrou tudo. 🎉</p>';
+    return;
+  }
+  for (const item of itens) {
+    const linha = document.createElement("div");
+    linha.className = "item";
+    const nome = document.createElement("span");
+    const est = item.ultima_estimativa;
+    nome.textContent = `${item.termo}` + (est ? ` (IA: ${est.gramas} g, ${est.kcal} kcal)` : " (sem estimativa)");
+    const lado = document.createElement("span");
+    lado.className = "valores";
+    lado.textContent = `${item.vezes}x · ${item.ultimo_em} `;
+    for (const [rotulo, status] of [["✔ cadastrado", "cadastrado"], ["✖ ignorar", "ignorado"]]) {
+      const botao = document.createElement("button");
+      botao.type = "button";
+      botao.textContent = rotulo;
+      botao.className = "mini";
+      botao.addEventListener("click", async () => {
+        const dados = new FormData();
+        dados.append("status", status);
+        await fetch(`/simulador/revisao/${item.id}`, { method: "POST", body: dados });
+        carregarRevisao();
+      });
+      lado.append(botao);
+    }
+    linha.append(nome, lado);
+    alvo.append(linha);
+  }
 }
 
 // ---------- Início ----------

@@ -5,6 +5,7 @@ núcleo e devolve a resposta em JSON. Também tem as rotas de apoio do simulador
 histórico, lista de usuários de teste, resetar usuário e servir as mídias.
 """
 
+import json
 import re
 import time
 from datetime import datetime
@@ -13,10 +14,10 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app.banco.modelos import Mensagem
+from app.banco.modelos import Mensagem, RevisaoAlimento
 from app.banco.sessao import get_db
 from app.canais.base import MensagemEntrada, MensagemSaida, Midia, TipoMidia
-from app.nucleo import historico, orquestrador, perfil, registros
+from app.nucleo import historico, memoria, orquestrador, perfil, registros, revisao
 from app.tempo import como_utc, para_local, relogio_simulado
 
 TAMANHO_MAXIMO = 16 * 1024 * 1024  # 16 MB, o mesmo limite de áudio do WhatsApp
@@ -90,7 +91,8 @@ def ver_banco(telefone: str, db: Session = Depends(get_db)) -> dict:
     """Refeições gravadas do usuário, agrupadas por dia (mais recente primeiro), com totais (RF31)."""
     usuario = historico.buscar_usuario(db, _validar_telefone(telefone))
     if usuario is None:
-        return {"dias": [], "perfil": {}, "meta": None, "aceite": None, "pesos": []}
+        return {"dias": [], "perfil": {}, "meta": None, "aceite": None, "pesos": [],
+                "medidas": {}, "alimentos_proprios": [], "frequentes": []}
 
     meta = perfil.meta(usuario.perfil)
     aceite = next((c for c in reversed(usuario.consentimentos)), None)
@@ -105,6 +107,12 @@ def ver_banco(telefone: str, db: Session = Depends(get_db)) -> dict:
             {"peso_kg": p.peso_kg, "em": para_local(p.registrado_em).strftime("%d/%m/%Y")}
             for p in usuario.pesos
         ],
+        "medidas": memoria.medidas(usuario),
+        "alimentos_proprios": [
+            {"nome": a.nome, "porcao_g": a.porcao_g, "kcal_porcao": round(a.kcal * a.porcao_g / 100)}
+            for a in usuario.alimentos_proprios
+        ],
+        "frequentes": memoria.itens_frequentes(db, usuario),
     }
 
     dias: dict[str, dict] = {}
@@ -132,6 +140,34 @@ def _serializar_item(item) -> dict:
     campos = ("id", "descricao", "alimento_nome", "gramas", "kcal", "proteina", "carboidrato",
               "gordura", "estimado", "confianca", "origem", "explicacao")
     return {campo: getattr(item, campo) for campo in campos}
+
+
+@router.get("/revisao")
+def ver_revisao(db: Session = Depends(get_db)) -> list[dict]:
+    """Fila de revisão: o que a base não tinha e a IA estimou (tarefas de cadastro)."""
+    return [
+        {
+            "id": item.id,
+            "termo": item.exemplo,
+            "vezes": item.vezes,
+            "ultima_estimativa": json.loads(item.ultima_estimativa) if item.ultima_estimativa else None,
+            "ultimo_em": para_local(item.ultimo_em).strftime("%d/%m %H:%M"),
+        }
+        for item in revisao.pendentes(db)
+    ]
+
+
+@router.post("/revisao/{item_id}")
+def marcar_revisao(item_id: int, status: str = Form(...), db: Session = Depends(get_db)) -> dict:
+    """Marca um item como cadastrado (entrou na Base NutrIA) ou ignorado."""
+    if status not in ("cadastrado", "ignorado", "pendente"):
+        raise HTTPException(422, "status deve ser cadastrado, ignorado ou pendente.")
+    item = db.get(RevisaoAlimento, item_id)
+    if item is None:
+        raise HTTPException(404, "Item não encontrado.")
+    item.status = status
+    db.commit()
+    return {"id": item_id, "status": status}
 
 
 @router.delete("/usuarios/{telefone}")

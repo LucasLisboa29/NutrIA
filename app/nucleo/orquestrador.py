@@ -224,7 +224,7 @@ def _executar(ctx, chamada, telemetria: Telemetria, depuracao: dict) -> Resultad
         try:
             resultado = ferramentas.executar(ctx, chamada.nome, chamada.argumentos)
             erro = False
-        except (ferramentas.ErroFerramenta, ValueError, KeyError, TypeError) as excecao:
+        except (ferramentas.ErroFerramenta, ValueError, LookupError, TypeError) as excecao:
             # Erro de argumento: a IA lê a mensagem e pode tentar de novo.
             ctx.db.rollback()
             resultado = {"erro": str(excecao)}

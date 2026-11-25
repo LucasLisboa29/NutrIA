@@ -33,10 +33,17 @@ def para_gramas(
     quantidade: float | None = None,
     unidade: str | None = None,
     tamanho: str | None = None,
+    medidas_usuario: dict[str, float] | None = None,
+    padrao_g: float | None = None,
 ) -> Porcao:
+    """Gramas de um item. Ordem: medida do usuário > do alimento > genérica > porção padrão.
+
+    `medidas_usuario` são as medidas que a pessoa ensinou ("caneca" = 350). `padrao_g`
+    troca a porção padrão (ex.: o conteúdo de uma embalagem do Open Food Facts).
+    """
     regras = carregar_yaml("porcoes.yaml")
     especificas = _medidas_do_alimento(alimento, regras)
-    padrao = especificas.get("padrao", regras["padrao_geral"])
+    padrao = padrao_g or especificas.get("padrao", regras["padrao_geral"])
     fator, nome_tamanho = _fator_tamanho(tamanho, regras)
     sufixo = f" × {nome_tamanho} ({fator:g})" if nome_tamanho else ""
 
@@ -47,7 +54,16 @@ def para_gramas(
 
     quantidade = 1 if quantidade is None else quantidade
     unidade_norm = normalizar_unidade(unidade or "unidade", regras)
+    medidas_usuario = medidas_usuario or {}
 
+    if unidade_norm in medidas_usuario:
+        # Camada 1: a pessoa ensinou ("minha caneca tem 350 ml"). Vale mais que a média.
+        por_medida = medidas_usuario[unidade_norm]
+        gramas = quantidade * por_medida * fator
+        return Porcao(
+            gramas, False, MEDIA,
+            f"{quantidade:g} × {unidade_norm} (sua medida: {por_medida:g} g){sufixo} = {gramas:g} g",
+        )
     if unidade_norm in especificas:
         por_medida, confianca = especificas[unidade_norm], MEDIA
     elif unidade_norm in regras["medidas"]:

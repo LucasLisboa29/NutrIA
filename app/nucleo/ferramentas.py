@@ -16,8 +16,9 @@ from sqlalchemy.orm import Session
 
 from app.banco.modelos import ItemRefeicao, Refeicao, Usuario
 from app.ia.base import Ferramenta
-from app.nutricao import calculo, porcoes, taco
+from app.nutricao import calculo, openfoodfacts, porcoes, taco
 from app.nutricao.calculo import ItemCalculado
+from app.nucleo import memoria, revisao
 from app.nucleo import perfil as perfis
 from app.nucleo import registros
 from app.tempo import agora, fuso_local, para_local
@@ -280,6 +281,60 @@ DEFINICOES += [
     ),
 ]
 
+DEFINICOES += [
+    Ferramenta(
+        nome="ensinar_medida",
+        descricao=(
+            "Guarda uma medida que o usuário ensinou sobre um recipiente dele (ex.: 'minha "
+            "caneca tem uns 350 ml', 'meu pote de marmita leva 400 g'). Depois disso, essa "
+            "medida vale automaticamente para ele nos registros."
+        ),
+        parametros={
+            "type": "object",
+            "properties": {
+                "nome": {"type": "string", "description": "Nome da medida, ex.: 'caneca', 'pote da marmita'."},
+                "gramas": {"type": "number", "description": "Quanto cabe, em g ou ml (1 ml ~ 1 g)."},
+                "descricao": {"type": ["string", "null"]},
+            },
+            "required": ["nome", "gramas"],
+        },
+    ),
+    Ferramenta(
+        nome="ensinar_alimento",
+        descricao=(
+            "Guarda um alimento do usuário que não está na base: pelo rótulo (valores de "
+            "uma porção) ou pela receita dele (ingredientes). Ex.: 'meu whey tem 120 kcal e "
+            "24 g de proteína em 30 g', 'meu shake é 1 scoop de whey com 300 ml de leite'. "
+            "Depois disso, o nome dele passa a ser encontrado nos registros."
+        ),
+        parametros={
+            "type": "object",
+            "properties": {
+                "nome": {"type": "string"},
+                "porcao_g": {"type": ["number", "null"], "description": "Peso da porção do rótulo."},
+                "kcal": {"type": ["number", "null"], "description": "kcal da porção (rótulo)."},
+                "proteina": {"type": ["number", "null"]},
+                "carboidrato": {"type": ["number", "null"]},
+                "gordura": {"type": ["number", "null"]},
+                "ingredientes": {
+                    "type": ["array", "null"],
+                    "description": "Para receita: ingredientes com quantidade e unidade.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "alimento": {"type": "string"},
+                            "quantidade": {"type": ["number", "null"]},
+                            "unidade": {"type": ["string", "null"]},
+                        },
+                        "required": ["alimento"],
+                    },
+                },
+            },
+            "required": ["nome"],
+        },
+    ),
+]
+
 # Antes do aceite dos termos (LGPD), a IA só tem esta ferramenta.
 DEFINICOES_ONBOARDING = [
     Ferramenta(
@@ -309,6 +364,8 @@ def executar(ctx: Contexto, nome: str, argumentos: dict) -> dict:
         "apagar_item": apagar_item,
         "alterar_refeicao": alterar_refeicao,
         "apagar_meus_dados": apagar_meus_dados,
+        "ensinar_medida": ensinar_medida,
+        "ensinar_alimento": ensinar_alimento,
     }
     if nome not in funcoes:
         raise ErroFerramenta(f"Ferramenta desconhecida: {nome}")
@@ -323,8 +380,9 @@ def registrar_refeicao(ctx: Contexto, args: dict) -> dict:
 
     novos: list[ItemRefeicao] = []
     nao_encontrados: list[str] = []
+    pendencias: list = []  # termos para a fila de revisão
     for item in args.get("itens") or []:
-        calculados = _calcular_item(ctx.db, item)
+        calculados = _calcular_item(ctx.db, item, ctx.usuario, pendencias)
         if calculados is None:
             nao_encontrados.append(item.get("alimento", ""))
             continue
@@ -339,6 +397,7 @@ def registrar_refeicao(ctx: Contexto, args: dict) -> dict:
 
     if not novos and not refeicao.itens:
         ctx.db.rollback()
+        _gravar_revisao(ctx, pendencias)
         return {
             "registrado": False,
             "nao_encontrados": nao_encontrados,
@@ -347,6 +406,8 @@ def registrar_refeicao(ctx: Contexto, args: dict) -> dict:
         }
 
     refeicao.itens.extend(novos)
+    for termo, estimativa in pendencias:
+        revisao.registrar(ctx.db, termo, estimativa)
     ctx.db.commit()
 
     resultado = {
@@ -381,17 +442,27 @@ def atualizar_item(ctx: Contexto, args: dict) -> dict:
         "tamanho": mudou_ou_atual("tamanho", item.tamanho),
     }
 
-    if item.alimento_id is None and not args.get("alimento"):
+    if item.origem == "ia" and not args.get("alimento"):
         raise ErroFerramenta(
-            "Este item foi estimado pela IA (não está na tabela). Para mudar a quantidade, "
+            "Este item foi estimado pela IA (não está na base). Para mudar a quantidade, "
             "chame registrar_refeicao com uma nova estimativa_ia e explique ao usuário."
         )
-    alimento = (
-        taco.melhor(ctx.db, novo["alimento"])
-        if args.get("alimento")
-        else taco.por_nome_exato(ctx.db, item.alimento_nome)
-    )
-    calculado = calculo.calcular(ctx.db, alimento, novo["quantidade"], novo["unidade"], novo["tamanho"])
+    if item.alimento_id is not None and not args.get("alimento"):
+        # Mesmo alimento da tabela, só mudou quantidade/medida/tamanho.
+        alimento = taco.por_nome_exato(ctx.db, item.alimento_nome)
+        calculado = calculo.calcular(ctx.db, alimento, novo["quantidade"], novo["unidade"],
+                                     novo["tamanho"], memoria.medidas(ctx.usuario))
+    else:
+        # Alimento novo, ou item do usuário / Open Food Facts: passa pelas camadas da base.
+        calculados = _calcular_item(ctx.db, {**novo, "estimativa_ia": None}, ctx.usuario)
+        if not calculados:
+            raise ErroFerramenta(
+                f"Não encontrei {novo['alimento']!r} na base. Apague o item e registre de novo "
+                "com estimativa_ia."
+            )
+        if len(calculados) > 1:
+            raise ErroFerramenta("Esse é um prato composto: apague o item e registre o prato de novo.")
+        calculado = calculados[0]
 
     item.quantidade, item.unidade, item.tamanho = novo["quantidade"], novo["unidade"], novo["tamanho"]
     _copiar_valores(item, calculado)
@@ -444,7 +515,8 @@ def consultar_resumo(ctx: Contexto, args: dict) -> dict:
 
 def consultar_alimento(ctx: Contexto, args: dict) -> dict:
     """Mesma conta do registro, mas nada é gravado (RF24)."""
-    calculados = _calcular_item(ctx.db, {**args, "estimativa_ia": None})
+    calculados = _calcular_item(ctx.db, {**args, "estimativa_ia": None}, ctx.usuario)
+    ctx.db.commit()  # guarda o cache do Open Food Facts, se a busca foi até lá
     if calculados is None:
         return {"encontrado": False, "alimento": args.get("alimento"),
                 "instrucao": "Não está na tabela. Se responder, deixe claro que é uma estimativa sua."}
@@ -493,6 +565,41 @@ def alterar_refeicao(ctx: Contexto, args: dict) -> dict:
     ctx.db.commit()
     return {"alterado": True, "antes": antes,
             "depois": {"tipo": refeicao.tipo, "quando": f"{para_local(refeicao.data_hora):%d/%m %H:%M}"}}
+
+
+def ensinar_medida(ctx: Contexto, args: dict) -> dict:
+    try:
+        medida = memoria.ensinar_medida(ctx.db, ctx.usuario, args.get("nome", ""), args.get("gramas") or 0,
+                                        args.get("descricao") or "")
+    except memoria.DadoInvalido as erro:
+        raise ErroFerramenta(str(erro)) from erro
+    ctx.db.commit()
+    return {"guardado": True, "medida": medida.unidade, "gramas": medida.gramas,
+            "minhas_medidas": memoria.medidas(ctx.usuario)}
+
+
+def ensinar_alimento(ctx: Contexto, args: dict) -> dict:
+    try:
+        alimento = memoria.ensinar_alimento(ctx.db, ctx.usuario, args)
+    except taco.AlimentoNaoEncontrado as erro:
+        raise ErroFerramenta(f"Ingrediente não encontrado na base: {erro.termo}") from erro
+    except memoria.DadoInvalido as erro:
+        raise ErroFerramenta(str(erro)) from erro
+    ctx.db.commit()
+    return {
+        "guardado": True,
+        "alimento": alimento.nome,
+        "porcao_g": alimento.porcao_g,
+        "por_porcao": {c: round(getattr(alimento, c) * alimento.porcao_g / 100, 1)
+                       for c in ("kcal", "proteina", "carboidrato", "gordura")},
+    }
+
+
+def _gravar_revisao(ctx: Contexto, pendencias: list) -> None:
+    for termo, estimativa in pendencias:
+        revisao.registrar(ctx.db, termo, estimativa)
+    if pendencias:
+        ctx.db.commit()
 
 
 # Pedidos de apagar aguardando confirmação: usuario_id -> (id da mensagem do pedido, validade).
@@ -584,37 +691,64 @@ def _quando(texto: str | None) -> datetime:
     return momento
 
 
-def _calcular_item(db: Session, item: dict) -> list[ItemCalculado] | None:
-    """Um item vira 1 ItemCalculado (ou vários, se for prato composto). None = não achou."""
+def _calcular_item(
+    db: Session, item: dict, usuario: Usuario | None = None, pendencias: list | None = None
+) -> list[ItemCalculado] | None:
+    """Um item vira 1 ItemCalculado (ou vários, se for prato composto). None = não achou.
+
+    A base de alimentos em camadas, da mais confiável para a menos:
+      1. o que o próprio usuário ensinou (medidas e alimentos dele);
+      2. TACO + Base NutrIA (receitas, derivados e pratos compostos);
+      3. Open Food Facts (produtos de marca);
+      4. estimativa da IA, que também entra na fila de revisão para virar cadastro.
+    `pendencias` recebe os termos para a fila de revisão (gravados depois, por quem chamou).
+    """
     termo = (item.get("alimento") or "").strip()
     quantidade, unidade, tamanho = item.get("quantidade"), item.get("unidade"), item.get("tamanho")
+    estimativa = item.get("estimativa_ia")
+    minhas_medidas = memoria.medidas(usuario) if usuario else {}
 
+    # 1. Do usuário
+    if usuario is not None:
+        proprio = memoria.buscar_alimento(usuario, termo)
+        if proprio is not None:
+            return [memoria.calcular_alimento(proprio, quantidade, unidade, tamanho, minhas_medidas)]
+
+    # 2. TACO + Base NutrIA
     prato = calculo.calcular_prato(db, termo, quantidade, tamanho, unidade)
     if prato is not None:
         return prato
     try:
-        return [calculo.calcular(db, termo, quantidade, unidade, tamanho)]
+        return [calculo.calcular(db, termo, quantidade, unidade, tamanho, minhas_medidas)]
     except taco.AlimentoNaoEncontrado:
-        estimativa = item.get("estimativa_ia")
-        if not estimativa:
-            return None
-        # RF14: não está na tabela; usa o número da IA, marcado como baixa confiança.
-        return [
-            ItemCalculado(
-                alimento_id=0,
-                alimento=termo,
-                origem="ia",
-                gramas=round(float(estimativa["gramas"]), 1),
-                kcal=round(float(estimativa["kcal"])),
-                proteina=round(float(estimativa["proteina"]), 1),
-                carboidrato=round(float(estimativa["carboidrato"]), 1),
-                gordura=round(float(estimativa["gordura"]), 1),
-                fibra=0.0,
-                estimado=True,
-                confianca=porcoes.BAIXA,
-                explicacao="não está na tabela: estimativa da IA (revisar)",
-            )
-        ]
+        pass
+
+    # 3. Open Food Facts (produto de outro país perde para o rótulo lido na foto)
+    produto = openfoodfacts.buscar(db, termo)
+    if produto is not None and (produto.do_brasil or not estimativa):
+        return [openfoodfacts.calcular(produto, quantidade, unidade, tamanho, minhas_medidas)]
+
+    # 4. Estimativa da IA (RF14), marcada como baixa confiança e enviada para revisão
+    if pendencias is not None:
+        pendencias.append((termo, estimativa))
+    if not estimativa:
+        return None
+    return [
+        ItemCalculado(
+            alimento_id=0,
+            alimento=termo,
+            origem="ia",
+            gramas=round(float(estimativa["gramas"]), 1),
+            kcal=round(float(estimativa["kcal"])),
+            proteina=round(float(estimativa["proteina"]), 1),
+            carboidrato=round(float(estimativa["carboidrato"]), 1),
+            gordura=round(float(estimativa["gordura"]), 1),
+            fibra=0.0,
+            estimado=True,
+            confianca=porcoes.BAIXA,
+            explicacao="não está na base: estimativa da IA (foi para a fila de revisão)",
+        )
+    ]
 
 
 def _novo_item(item: dict, calculado: ItemCalculado) -> ItemRefeicao:

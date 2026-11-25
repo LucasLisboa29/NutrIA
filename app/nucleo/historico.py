@@ -14,9 +14,11 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.banco.modelos import (
+    AlimentoUsuario,
     Consentimento,
     HistoricoPeso,
     ItemRefeicao,
+    MedidaUsuario,
     Mensagem,
     Perfil,
     Refeicao,
@@ -103,7 +105,7 @@ def apagar_usuario(db: Session, usuario: Usuario) -> None:
     db.flush()  # grava o que estiver pendente antes, para apagar junto
     refeicoes = select(Refeicao.id).where(Refeicao.usuario_id == usuario_id)
     db.execute(delete(ItemRefeicao).where(ItemRefeicao.refeicao_id.in_(refeicoes)))
-    for tabela in (Refeicao, Mensagem, HistoricoPeso, Consentimento, Perfil):
+    for tabela in (Refeicao, Mensagem, HistoricoPeso, Consentimento, Perfil, MedidaUsuario, AlimentoUsuario):
         db.execute(delete(tabela).where(tabela.usuario_id == usuario_id))
     db.execute(delete(Usuario).where(Usuario.id == usuario_id))
     db.commit()

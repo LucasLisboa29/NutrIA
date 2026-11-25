@@ -61,6 +61,7 @@
         <div class="abas" role="tablist">
           <button type="button" role="tab" class="aba ativa" data-aba="depuracao" aria-selected="true">Depuração</button>
           <button type="button" role="tab" class="aba" data-aba="banco" aria-selected="false">Banco</button>
+          <button type="button" role="tab" class="aba" data-aba="revisao" aria-selected="false">Revisão</button>
         </div>
 
         <div id="aba-depuracao" role="tabpanel">
@@ -95,6 +96,12 @@
 
         <div id="aba-banco" role="tabpanel" hidden>
           <div id="banco"></div>
+        </div>
+
+        <div id="aba-revisao" role="tabpanel" hidden>
+          <p class="dica">Alimentos que a base não tinha e a IA precisou estimar. Cada um é uma tarefa
+            de cadastro na Base NutrIA (receita, sinônimo ou alimento novo). Vale para todos os usuários.</p>
+          <div id="revisao"></div>
         </div>
       </section>
     </aside>

@@ -153,10 +153,10 @@ NutrIA/
 - [x] Prompt de foto: legenda manda, camadas para doces, só o que é da pessoa, perguntar na dúvida, prato meio comido · M
 
 **Etapa 2: base própria e aprendizado**
-- [ ] Medidas e alimentos do usuário ("minha caneca = 350 ml") + ferramenta para ensinar · M
-- [ ] Itens frequentes do usuário no contexto (para perguntar "é a sua caneca de sempre?") · M
-- [ ] Fila de revisão: toda `estimativa_ia` vira tarefa de cadastro na Base NutrIA · M
-- [ ] Open Food Facts para produtos de marca (com atribuição, licença ODbL) · G
+- [x] Medidas e alimentos do usuário ("minha caneca = 350 ml") + ferramenta para ensinar · M
+- [x] Itens frequentes do usuário no contexto (para perguntar "é a sua caneca de sempre?") · M
+- [x] Fila de revisão: toda `estimativa_ia` vira tarefa de cadastro na Base NutrIA · M
+- [x] Open Food Facts para produtos de marca (com atribuição, licença ODbL) · G
 
 **Etapa 3: teste real**
 - [ ] Rodar as 11 fotos no app real e medir: itens certos, erro de kcal ≤ 25%, zero trocas graves, ≤ 2 chamadas, ≤ 10 s, ≤ US$ 0,002 · M

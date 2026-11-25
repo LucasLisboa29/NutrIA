@@ -39,6 +39,7 @@ def calcular(
     quantidade: float | None = None,
     unidade: str | None = None,
     tamanho: str | None = None,
+    medidas_usuario: dict[str, float] | None = None,
 ) -> ItemCalculado:
     """Ex.: calcular(db, "arroz", 2, "colher de servir").
 
@@ -47,8 +48,38 @@ def calcular(
     """
     if isinstance(alimento, str):
         alimento = taco.melhor(db, alimento)
-    porcao = porcoes.para_gramas(alimento, quantidade, unidade, tamanho)
+    porcao = porcoes.para_gramas(alimento, quantidade, unidade, tamanho, medidas_usuario)
     return _montar(alimento, porcao.gramas, porcao.estimado, porcao.confianca, porcao.explicacao)
+
+
+def de_valores(
+    nome: str,
+    origem: str,
+    por_100g: dict[str, float],
+    gramas: float,
+    estimado: bool,
+    confianca: str,
+    explicacao: str,
+) -> ItemCalculado:
+    """Item calculado a partir de valores por 100 g que não estão na tabela `alimentos`
+    (alimento ensinado pelo usuário, produto do Open Food Facts)."""
+    def valor(campo: str, casas: int) -> float:
+        return round((por_100g.get(campo) or 0) * gramas / 100, casas)
+
+    return ItemCalculado(
+        alimento_id=0,
+        alimento=nome,
+        origem=origem,
+        gramas=round(gramas, 1),
+        kcal=valor("kcal", 0),
+        proteina=valor("proteina", 1),
+        carboidrato=valor("carboidrato", 1),
+        gordura=valor("gordura", 1),
+        fibra=valor("fibra", 1),
+        estimado=estimado,
+        confianca=confianca,
+        explicacao=explicacao,
+    )
 
 
 def nutrientes(alimento: Alimento, gramas: float) -> dict[str, float]:

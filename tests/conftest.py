@@ -15,6 +15,7 @@ os.environ["PASTA_UPLOADS"] = str(_PASTA_TESTE / "uploads")
 # Os testes nunca chamam a IA de verdade (custa dinheiro e depende da internet).
 # Quem precisa de IA usa a fixture `ia_falsa`, que responde com um roteiro.
 os.environ["ANTHROPIC_API_KEY"] = ""
+os.environ["OPENFOODFACTS_ATIVO"] = "false"  # testes não dependem da internet (ver off_falso)
 os.environ["GROQ_API_KEY"] = ""  # idem para a transcrição de áudio (fixture `transcritor_falso`)
 
 import pytest  # noqa: E402

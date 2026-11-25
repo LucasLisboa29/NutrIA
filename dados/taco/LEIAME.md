@@ -20,3 +20,19 @@ planilha original da Unicamp e fez esta limpeza:
 A importação para o banco está em `app/nutricao/importar_taco.py`. Complementos e
 correções nossos (marcados com origem `derivado` ou `manual`) ficam em
 `dados/alimentos_extras.yaml`, nunca nestes CSVs.
+
+## Outras fontes (camadas da base de alimentos)
+
+1. **Alimentos e medidas do usuário**: o que cada pessoa ensina ao bot (tabelas
+   `medidas_usuario` e `alimentos_usuario`).
+2. **TACO** (esta pasta) + **Base NutrIA** (`dados/alimentos_extras.yaml`: receitas montadas
+   com ingredientes da TACO, derivados e correções).
+3. **Open Food Facts** (produtos de marca), consultado pela internet e guardado em cache
+   (`produtos_off`). Dados © Open Food Facts contributors, licença
+   [ODbL](https://opendatacommons.org/licenses/odbl/1-0/): é obrigatório citar a fonte.
+   Itens dessa origem aparecem com "dados: Open Food Facts (ODbL)" na explicação.
+4. **Estimativa da IA**: último recurso, marcada como confiança baixa e enviada para a fila
+   de revisão (`revisao_alimentos`) para virar cadastro.
+
+A TBCA (USP) ficou de fora: a consulta é livre, mas o uso dentro de um software exige
+licença paga.
