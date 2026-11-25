@@ -49,6 +49,122 @@ novos:
     base: "Tomate, com semente, cru"
     fator: 1.0  # mesma composição por 100 g; muda só o peso da unidade (porcoes.yaml)
 
+  # ---------- Receitas da Base NutrIA ----------
+  # Cada receita lista ingredientes da TACO (ou de itens acima) e o peso final do prato
+  # pronto (rendimento_g). O código calcula o valor por 100 g sozinho: o número é
+  # rastreável até a TACO, não é escrito "de cabeça" por ninguém.
+  # Receitas caseiras típicas; podem ser ajustadas com a receita real de cada um.
+
+  - id: 10005
+    nome: "Molho branco (bechamel)"
+    categoria: "Alimentos preparados"
+    origem: receita
+    rendimento_g: 520  # um pouco de água evapora no fogo
+    ingredientes:
+      - {alimento: "Leite, de vaca, integral", gramas: 500}
+      - {alimento: "Manteiga, com sal", gramas: 30}
+      - {alimento: "Farinha, de trigo", gramas: 30}
+
+  - id: 10006
+    nome: "Macarrão, ao molho branco"
+    categoria: "Alimentos preparados"
+    origem: receita
+    ingredientes:
+      - {alimento: "Macarrão, trigo, cozido", gramas: 200}
+      - {alimento: "Molho branco (bechamel)", gramas: 100}
+
+  - id: 10007
+    nome: "Macarrão, à carbonara"
+    categoria: "Alimentos preparados"
+    origem: receita
+    ingredientes:  # versão de restaurante brasileiro (com creme de leite)
+      - {alimento: "Macarrão, trigo, cozido", gramas: 250}
+      - {alimento: "Ovo, de galinha, gema, cozida/10minutos", gramas: 20}
+      - {alimento: "Queijo, parmesão", gramas: 20}
+      - {alimento: "Toucinho, frito", gramas: 25}
+      - {alimento: "Creme de Leite", gramas: 30}
+
+  - id: 10008
+    nome: "Lasanha, à bolonhesa"
+    categoria: "Alimentos preparados"
+    origem: receita
+    rendimento_g: 1450  # refratário de ~6 pedaços; o forno seca um pouco
+    ingredientes:
+      - {alimento: "Lasanha, massa fresca, cozida", gramas: 500}
+      - {alimento: "Carne, bovina, acém, moído, cozido", gramas: 400}
+      - {alimento: "Tomate, molho industrializado", gramas: 300}
+      - {alimento: "Queijo, mozarela", gramas: 200}
+      - {alimento: "Presunto, sem capa de gordura", gramas: 100}
+
+  - id: 10009
+    nome: "Pizza, frango com catupiry"
+    categoria: "Alimentos preparados"
+    origem: receita
+    rendimento_g: 1100  # pizza grande de 8 fatias, assada
+    ingredientes:  # catupiry ~ requeijão cremoso
+      - {alimento: "Farinha, de trigo", gramas: 300}
+      - {alimento: "Óleo, de soja", gramas: 20}
+      - {alimento: "Tomate, molho industrializado", gramas: 100}
+      - {alimento: "Queijo, mozarela", gramas: 200}
+      - {alimento: "Frango, peito, sem pele, cozido", gramas: 200}
+      - {alimento: "Queijo, requeijão, cremoso", gramas: 150}
+
+  - id: 10010
+    nome: "Pizza, calabresa"
+    categoria: "Alimentos preparados"
+    origem: receita
+    rendimento_g: 1020
+    ingredientes:  # calabresa ~ linguiça de porco grelhada
+      - {alimento: "Farinha, de trigo", gramas: 300}
+      - {alimento: "Óleo, de soja", gramas: 20}
+      - {alimento: "Tomate, molho industrializado", gramas: 100}
+      - {alimento: "Queijo, mozarela", gramas: 200}
+      - {alimento: "Lingüiça, porco, grelhada", gramas: 150}
+      - {alimento: "Cebola, crua", gramas: 50}
+
+  - id: 10011
+    nome: "Rosca doce (pão doce)"
+    categoria: "Cereais e derivados"
+    origem: receita
+    rendimento_g: 860  # o forno tira um pouco de água da massa
+    ingredientes:
+      - {alimento: "Farinha, de trigo", gramas: 500}
+      - {alimento: "Leite, de vaca, integral", gramas: 250}
+      - {alimento: "Açúcar, refinado", gramas: 100}
+      - {alimento: "Manteiga, com sal", gramas: 60}
+      - {alimento: "Ovo, de galinha, inteiro, cru", gramas: 100}
+
+  - id: 10012
+    nome: "Creme de confeiteiro"
+    categoria: "Alimentos preparados"
+    origem: receita
+    rendimento_g: 650
+    ingredientes:  # recheio de tortas e doces de padaria
+      - {alimento: "Leite, de vaca, integral", gramas: 500}
+      - {alimento: "Açúcar, refinado", gramas: 100}
+      - {alimento: "Ovo, de galinha, gema, cozida/10minutos", gramas: 60}
+      - {alimento: "Milho, amido, cru", gramas: 40}
+
+  - id: 10013
+    nome: "Massa doce de torta (farofa, base)"
+    categoria: "Alimentos preparados"
+    origem: receita
+    rendimento_g: 400
+    ingredientes:  # base, farofa ou crumble de tortas doces
+      - {alimento: "Farinha, de trigo", gramas: 200}
+      - {alimento: "Manteiga, com sal", gramas: 100}
+      - {alimento: "Açúcar, refinado", gramas: 80}
+      - {alimento: "Ovo, de galinha, inteiro, cru", gramas: 50}
+
+  - id: 10014
+    nome: "Suco de frutas vermelhas, com açúcar"
+    categoria: "Bebidas"
+    origem: receita
+    rendimento_g: 400  # o resto do peso é água
+    ingredientes:
+      - {alimento: "Morango, cru", gramas: 150}
+      - {alimento: "Açúcar, refinado", gramas: 25}
+
 correcoes:
   - nome: "Leite, de vaca, integral"
     kcal: 61

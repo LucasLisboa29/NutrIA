@@ -19,6 +19,9 @@ TIPOS = {
     "lanche_da_tarde": "Lanche da tarde",
     "jantar": "Jantar",
     "ceia": "Ceia",
+    # Bebida, café, fruta ou belisco fora das refeições: nem tudo é "refeição", e o bot
+    # é para pessoas comuns, que nem sempre têm horários metódicos.
+    "avulso": "Ao longo do dia",
 }
 MACROS = ("kcal", "proteina", "carboidrato", "gordura", "fibra")
 

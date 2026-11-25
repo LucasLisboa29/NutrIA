@@ -589,7 +589,7 @@ def _calcular_item(db: Session, item: dict) -> list[ItemCalculado] | None:
     termo = (item.get("alimento") or "").strip()
     quantidade, unidade, tamanho = item.get("quantidade"), item.get("unidade"), item.get("tamanho")
 
-    prato = calculo.calcular_prato(db, termo, quantidade, tamanho)
+    prato = calculo.calcular_prato(db, termo, quantidade, tamanho, unidade)
     if prato is not None:
         return prato
     try:

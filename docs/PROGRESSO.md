@@ -5,12 +5,12 @@
 
 ## Agora
 
-- **Fase atual:** Fase 7, Calibragem (não iniciada)
-- **Próximo passo:** definir o formato dos cenários de teste (YAML) e o executor com
-  relatório (passou/falhou, custo, tempo).
-- **A conferir pelo Lucas:** (1) gravar um áudio de verdade pelo microfone do simulador;
-  (2) mandar fotos reais de pratos e ver se o Haiku acerta. Se errar muito, voltar a rota
-  `visao` de `config/modelos.yaml` para `claude-sonnet-5-5`.
+- **Fase atual:** Fase 6.5, Fotos de verdade (Etapa 1 concluída)
+- **Próximo passo:** Etapa 2: medidas e alimentos do usuário ("minha caneca = 350 ml"),
+  fila de revisão das estimativas da IA e Open Food Facts para produtos de marca.
+- **A conferir pelo Lucas:** gravar um áudio de verdade pelo microfone do simulador.
+- **Material de calibragem:** fotos e análise em `Treinamento NutrIA/` (fora do Git, fotos
+  pessoais). Apagar a pasta quando a calibragem das fotos terminar (pedido do Lucas).
 - **Bloqueios:** nenhum.
 
 ## Status das fases
@@ -24,7 +24,8 @@
 | 3 — Agente v1 (texto) | ✅ Concluído |
 | 4 — Perfil e metas | ✅ Concluído |
 | 5 — Consultas e correções | ✅ Concluído |
-| 6 — Foto e áudio | ✅ Concluído (falta foto real) |
+| 6 — Foto e áudio | ✅ Concluído |
+| 6.5 — Fotos de verdade | 🟡 Etapa 1 de 3 concluída |
 | 7 — Calibragem | ⬜ Não iniciado |
 | 8 — WhatsApp | ⬜ Não iniciado |
 
@@ -81,6 +82,16 @@
 | 2026-11-24 | `por_foto=true` força itens estimados e confiança no máximo média | Porção vista na foto é palpite (RF02) |
 | 2026-11-24 | Foto não é reenviada no histórico (vira "[foto] legenda") e não é analisada antes do aceite | Custo por mensagem; LGPD |
 | 2026-11-24 | Tomate-cereja como alimento derivado + sinônimos "salada verde", "bife grelhado" | A busca escolhia "tomate, purê" (300 g) e a IA gastava 2 chamadas corrigindo |
+| 2026-11-24 | A foto é a funcionalidade principal; fase 6.5 de calibragem com fotos reais antes da Fase 7 | Decisão do Lucas: a maioria dos usuários vai registrar por foto |
+| 2026-11-24 | Não depender só da TACO nem da IA: base em camadas (usuário → TACO → Base NutrIA → Open Food Facts → IA com fila de revisão) | Pedido do Lucas; a base cresce com o uso e a IA estima cada vez menos |
+| 2026-11-24 | TBCA (USP) fora por enquanto | Consulta livre, mas uso em software exige licença paga |
+| 2026-11-24 | Novo tipo de alimento "receita": ingredientes da TACO + rendimento | Pratos prontos com número rastreável até a TACO, sem número "de cabeça" |
+| 2026-11-24 | Busca aproximada exige que toda palavra importante da consulta esteja no nome | "rosquinha" virava "feijão rosinha" e "torta de morango" virava "morango cru" |
+| 2026-11-24 | Doces de doceria por camadas (morango + creme + massa) | Escolha do Lucas (método 1) |
+| 2026-11-24 | Foto: registrar só o que é claramente do usuário; o resto, perguntar sem gravar | Decisão do Lucas (suco e prato da namorada na foto 1) |
+| 2026-11-24 | Foto: item que não dá para identificar não é registrado; o bot pergunta. Gordura/ossos/restos não contam | Na simulação, gordura da carne virou "banana frita" |
+| 2026-11-24 | Prato meio comido: perguntar antes de registrar (exceção à RN01) | O que aparece é o que sobrou, não o que foi comido |
+| 2026-11-24 | Tipo "ao longo do dia" (`avulso`) e não falar de horário para bebidas e beliscos | Lucas: pessoas comuns não têm hábitos metódicos |
 
 ## Diário de sessões
 
@@ -179,3 +190,15 @@
 - Marco com serviços reais: áudio gerado pela voz do Windows ("Jantei duas fatias de
   pizza...") → 4,7 s, US$ 0,0016; foto de um prato desenhado → 6,1 s, US$ 0,0009 (Haiku).
 - Comparação de modelos na foto levou à troca Sonnet → Haiku na rota `visao` (ver Decisões).
+
+### 2026-11-24 — Sessão 2 (cont.): Fase 6.5, calibragem com fotos reais (Etapa 1)
+- Lucas trouxe 11 fotos reais (pasta `Treinamento NutrIA/`, fora do Git). Análise simulada
+  sem gastar API: identificação pelo Claude Code, números pelo código real do app.
+- Achados graves: busca trocando alimentos ("rosquinha" → feijão rosinha), pratos virando
+  um ingrediente (lasanha = só a massa, 82 kcal), prato meio comido registrando o que sobrou,
+  identificação errada (gordura vista como banana frita).
+- Etapa 1 feita: busca segura, tipo "receita" + 10 receitas da Base NutrIA, prato por peso,
+  caneca e outras medidas, tipo "ao longo do dia", prompt de foto com as decisões do Lucas.
+- Resultado na simulação: itens com número da IA caíram de 6 para 1; lasanha 255 → 610 kcal,
+  rosquinhas 136 (feijão) → 305 (rosca doce), torta 51 → 306 kcal.
+- 117 testes passando.

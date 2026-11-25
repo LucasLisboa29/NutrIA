@@ -99,6 +99,10 @@ def _aproximada(db: Session, consulta: str) -> list[tuple[Alimento, float]]:
             nota = max(nota, 0.95 * max(fuzz.ratio(consulta, p) for p in palavras_nome))
         if nota < NOTA_MINIMA:
             continue
+        if not _cobre_a_consulta(consulta, palavras_nome):
+            # Parecido no texto, mas é outro alimento ("rosquinha" x "feijão rosinha",
+            # "torta de morango" x "morango cru"): melhor "não encontrado" que um erro.
+            continue
         # Desempates, para o palpite ficar mais "humano":
         if palavras_nome[0] in palavras:
             nota += 3  # o alimento principal é o que a pessoa disse ("pera" > "laranja pera")
@@ -110,3 +114,31 @@ def _aproximada(db: Session, consulta: str) -> list[tuple[Alimento, float]]:
     # Ordena pela nota completa; só depois limita a 99 (100 é reservado ao sinônimo).
     notas.sort(key=lambda par: par[1], reverse=True)
     return [(alimento, round(min(nota, 99.0), 1)) for alimento, nota in notas]
+
+
+# Palavras que não definem o alimento ("suco DE uva", "pão COM manteiga").
+_PALAVRAS_VAZIAS = {"de", "da", "do", "das", "dos", "com", "e", "a", "o", "em", "no", "na", "ao", "um", "uma"}
+
+
+def _cobre_a_consulta(consulta: str, palavras_nome: list[str]) -> bool:
+    """Toda palavra importante do que a pessoa disse precisa estar no nome do alimento.
+
+    É a trava contra o pior erro da busca aproximada: escolher um alimento *parecido no
+    texto* mas diferente na comida. Regras:
+    - cada palavra da consulta precisa bater (quase igual, nota >= 90) com alguma palavra
+      do nome: "peito de frango grelhado" cobre "Frango, peito, sem pele, grelhado";
+    - exceção para erro de digitação na palavra principal: a 1ª palavra da consulta pode
+      ser só parecida (>= 80) com a 1ª palavra do nome ("cuzcuz" ~ "Cuscuz, paulista").
+    Assim "rosquinha" não vira "Feijão, rosinha" (a palavra principal do nome é "feijão")
+    e "torta de morango" não vira "Morango, cru" (não existe "torta" no nome).
+    """
+    nome = set(palavras_nome) | {singularizar(p) for p in palavras_nome}
+    importantes = [p for p in consulta.split() if p not in _PALAVRAS_VAZIAS]
+    for indice, palavra in enumerate(importantes):
+        formas = {palavra, singularizar(palavra)}
+        if formas & nome or any(fuzz.ratio(f, p) >= 90 for f in formas for p in nome):
+            continue
+        if indice == 0 and any(fuzz.ratio(f, palavras_nome[0]) >= 80 for f in formas):
+            continue
+        return False
+    return True

@@ -29,7 +29,11 @@ def test_marco_arroz_duas_colheres_de_servir(db):
 
 
 def test_importacao_tem_taco_e_extras(db):
-    assert db.scalar(select(func.count(Alimento.id))) == 601  # 597 da TACO + 4 extras
+    from app.nutricao.importar_taco import ARQUIVO_EXTRAS
+    import yaml
+
+    extras = yaml.safe_load(ARQUIVO_EXTRAS.read_text(encoding="utf-8"))["novos"]
+    assert db.scalar(select(func.count(Alimento.id))) == 597 + len(extras)  # TACO + Base NutrIA
     feijao = taco.por_nome_exato(db, "Feijão, carioca, cozido")
     assert (feijao.kcal, feijao.proteina, feijao.origem) == (76, 4.8, "taco")
     macarrao = taco.por_nome_exato(db, "Macarrão, trigo, cozido")

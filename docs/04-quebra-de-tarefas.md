@@ -138,6 +138,29 @@ NutrIA/
 - [x] Redimensionar imagens grandes antes de enviar (menos tokens, resposta mais rápida) · P
 - [x] Marco: áudio "jantei duas fatias de pizza" e foto de prato registrados certo · P (foto testada com um prato desenhado; foto real a conferir pelo Lucas)
 
+## Fase 6.5 — Fotos de verdade (calibragem antecipada)
+
+> A foto é o jeito principal de usar o NutrIA. Antes da Fase 7, as fotos reais do Lucas
+> foram analisadas (simulando o app) e viraram estas tarefas. Ver as Decisões no PROGRESSO.
+
+**Etapa 1: correções rápidas**
+- [x] Busca segura: a palavra principal precisa bater ("rosquinha" não vira feijão) · P
+- [x] Tipo de alimento "receita" na base (ingredientes da TACO + rendimento → valor por 100 g) · M
+- [x] Base NutrIA inicial: molho branco, macarrão ao molho branco, carbonara, lasanha bolonhesa, pizzas (frango com catupiry, calabresa), rosca doce, creme de confeiteiro, massa doce de torta, suco de frutas vermelhas · M
+- [x] Prato composto aceita peso total ("600 g de carbonara") · P
+- [x] Medidas novas: caneca (300 ml), pedaço de lasanha, colher de carne moída; sinônimos (bacon, carne de panela...) · P
+- [x] Tipo "ao longo do dia" (`avulso`) para bebidas e beliscos · P
+- [x] Prompt de foto: legenda manda, camadas para doces, só o que é da pessoa, perguntar na dúvida, prato meio comido · M
+
+**Etapa 2: base própria e aprendizado**
+- [ ] Medidas e alimentos do usuário ("minha caneca = 350 ml") + ferramenta para ensinar · M
+- [ ] Itens frequentes do usuário no contexto (para perguntar "é a sua caneca de sempre?") · M
+- [ ] Fila de revisão: toda `estimativa_ia` vira tarefa de cadastro na Base NutrIA · M
+- [ ] Open Food Facts para produtos de marca (com atribuição, licença ODbL) · G
+
+**Etapa 3: teste real**
+- [ ] Rodar as 11 fotos no app real e medir: itens certos, erro de kcal ≤ 25%, zero trocas graves, ≤ 2 chamadas, ≤ 10 s, ≤ US$ 0,002 · M
+
 ## Fase 7 — Calibragem
 
 - [ ] Formato de cenário de teste (YAML: mensagens do usuário + o que deve estar gravado no fim) [RF34] · M

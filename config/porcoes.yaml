@@ -51,6 +51,7 @@ apelidos_unidade:
   barra: [barrinha]
   sache: [saquinho, envelope]
   ponta de faca: []
+  caneca: [canecao, caneca grande]
 
 # Medidas genéricas, em gramas (ou ml, considerando 1 ml ~ 1 g).
 medidas:
@@ -82,6 +83,7 @@ medidas:
   barra: 25
   sache: 5
   ponta de faca: 5
+  caneca: 300  # caneca comum de café com leite/achocolatado
 
 # Medidas específicas por alimento. A chave é o nome na base e aceita * como curinga
 # ("Feijão, *, cozido" vale para todos os feijões cozidos). Vale a primeira que bater.
@@ -95,6 +97,38 @@ alimentos:
     prato: 250
   "Arroz carreteiro":
     padrao: 200
+  "Macarrão, à carbonara":
+    padrao: 350
+    prato: 350
+  "Macarrão, ao molho branco":
+    padrao: 300
+    prato: 300
+  "Lasanha, à bolonhesa":
+    padrao: 250
+    pedaco: 250
+    porcao: 250
+    prato: 350
+  "Molho branco (bechamel)":
+    padrao: 60
+    colher de sopa: 20
+    concha: 100
+  "Rosca doce (pão doce)":
+    padrao: 80
+    unidade: 80
+    fatia: 40
+    pedaco: 45
+  "Creme de confeiteiro":
+    padrao: 60
+    colher de sopa: 20
+  "Massa doce de torta (farofa, base)":
+    padrao: 40
+    colher de sopa: 10
+  "Suco de frutas vermelhas, com açúcar":
+    padrao: 300
+  "Toucinho, *":
+    padrao: 20
+    fatia: 10
+    pedaco: 10
   "Macarrão, trigo, cozido":
     padrao: 200
     pegador: 110
@@ -119,6 +153,11 @@ alimentos:
     padrao: 180
     concha: 130
     colher de servir: 60
+  "Carne, bovina, acém, moído, *":
+    padrao: 100
+    colher de sopa: 25
+    colher de servir: 50
+    concha: 100
   "Carne, bovina, *":
     padrao: 100
     bife: 100

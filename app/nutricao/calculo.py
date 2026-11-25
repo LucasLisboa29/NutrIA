@@ -80,12 +80,19 @@ def buscar_prato(termo: str) -> tuple[str, dict] | None:
 
 
 def calcular_prato(
-    db: Session, termo: str, quantidade: float | None = None, tamanho: str | None = None
+    db: Session,
+    termo: str,
+    quantidade: float | None = None,
+    tamanho: str | None = None,
+    unidade: str | None = None,
 ) -> list[ItemCalculado] | None:
     """Decompõe um prato ("PF", "x-tudo") nos ingredientes típicos.
 
     Devolve um item por ingrediente, para cada um poder ser corrigido depois
     ("sem batata frita"). Devolve None se o termo não for um prato conhecido.
+
+    A quantidade é em porções ("1 pedaço", "2 PFs"), exceto quando vem em peso ou
+    volume: "600 g de carbonara" escala o prato para pesar 600 g no total.
     """
     achado = buscar_prato(termo)
     if achado is None:
@@ -94,7 +101,13 @@ def calcular_prato(
 
     regras = carregar_yaml("porcoes.yaml")
     fator_tamanho, _ = porcoes._fator_tamanho(tamanho, regras)
-    multiplicador = (quantidade or 1) * fator_tamanho
+    unidade_norm = porcoes.normalizar_unidade(unidade, regras) if unidade else None
+    if quantidade and unidade_norm in porcoes._PESO_VOLUME:
+        peso_porcao = sum(i["gramas"] for i in prato["ingredientes"])
+        gramas_pedidas = quantidade * regras["medidas"][unidade_norm]
+        multiplicador = gramas_pedidas / peso_porcao * fator_tamanho
+    else:
+        multiplicador = (quantidade or 1) * fator_tamanho
 
     itens = []
     for ingrediente in prato["ingredientes"]:

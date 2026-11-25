@@ -105,19 +105,40 @@ def _ler_novos(por_nome: dict[str, Alimento], novos: list[dict]) -> list[Aliment
                 campo: None if getattr(base, campo) is None else round(getattr(base, campo) * item["fator"], 2)
                 for campo in NUTRIENTES
             }
+        elif item["origem"] == "receita":
+            valores = _valores_da_receita(item, por_nome)
         else:
             valores = {campo: item.get(campo) for campo in NUTRIENTES}
-        alimentos.append(
-            Alimento(
-                id=item["id"],
-                nome=item["nome"],
-                nome_busca=normalizar(item["nome"]),
-                categoria=item["categoria"],
-                origem=item["origem"],
-                **valores,
-            )
+        alimento = Alimento(
+            id=item["id"],
+            nome=item["nome"],
+            nome_busca=normalizar(item["nome"]),
+            categoria=item["categoria"],
+            origem=item["origem"],
+            **valores,
         )
+        alimentos.append(alimento)
+        por_nome[alimento.nome] = alimento  # receitas seguintes podem usar este como ingrediente
     return alimentos
+
+
+def _valores_da_receita(item: dict, por_nome: dict[str, Alimento]) -> dict:
+    """Soma os nutrientes dos ingredientes e divide pelo peso final (por 100 g).
+
+    O `rendimento_g` é o peso do prato pronto: cozinhar faz perder água (o peso cai e
+    os nutrientes ficam concentrados) ou ganhar (massa que absorve água). Se não for
+    informado, vale a soma dos ingredientes.
+    """
+    totais = {campo: 0.0 for campo in NUTRIENTES}
+    peso_ingredientes = 0.0
+    for ingrediente in item["ingredientes"]:
+        base = por_nome[ingrediente["alimento"]]  # erro claro se o nome estiver errado
+        gramas = ingrediente["gramas"]
+        peso_ingredientes += gramas
+        for campo in NUTRIENTES:
+            totais[campo] += (getattr(base, campo) or 0) * gramas / 100
+    rendimento = item.get("rendimento_g", peso_ingredientes)
+    return {campo: round(valor * 100 / rendimento, 2) for campo, valor in totais.items()}
 
 
 if __name__ == "__main__":
