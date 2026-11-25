@@ -22,14 +22,18 @@ from app.banco.modelos import Usuario
 from app.canais.base import MensagemEntrada, MensagemSaida, TipoMidia
 from app.config import PASTA_CONFIG, carregar_yaml
 from app.ia import roteador
+from app.audio.base import ErroTranscricao
 from app.ia.base import (
     ErroIA,
+    Imagem,
     Mensagem,
     MensagemUsuario,
     ResultadoFerramenta,
     ResultadosFerramentas,
     TurnoAssistente,
 )
+from app.ia.imagens import preparar as preparar_imagem
+from app.ia.imagens import tokens_estimados
 from app.nucleo import ferramentas, historico, perfil, registros
 from app.telemetria import Telemetria
 from app.tempo import agora, como_utc, para_local
@@ -60,21 +64,20 @@ def processar(db: Session, entrada: MensagemEntrada) -> Resultado:
     if not aceitou and primeiro_contato:
         # Boas-vindas + termo: texto fixo, sem IA (mesmo texto para todos, rápido e grátis).
         texto = carregar_yaml("onboarding.yaml")["boas_vindas"].strip()
-    elif entrada.midia is not None and not entrada.texto:
-        texto = (
-            "Por enquanto eu só entendo mensagens de texto 🙏 "
-            "Fotos e áudios chegam em breve! Me conta por escrito o que você comeu?"
-        )
     elif not roteador.ia_configurada():
         texto = (
             "⚙️ A IA ainda não está configurada (ANTHROPIC_API_KEY vazia no .env).\n"
             f"Você disse: *{entrada.texto}*"
         )
     else:
-        texto = _conversar(
-            db, usuario, entrada, mensagens_anteriores, telemetria, depuracao, aceitou,
-            mensagem_entrada.id,
-        )
+        texto_usuario, resposta_pronta = _texto_da_mensagem(db, entrada, mensagem_entrada, telemetria, depuracao)
+        if resposta_pronta:
+            texto = resposta_pronta
+        else:
+            texto = _conversar(
+                db, usuario, entrada, texto_usuario, mensagens_anteriores, telemetria,
+                depuracao, aceitou, mensagem_entrada.id,
+            )
 
     saida = MensagemSaida(destinatario=entrada.remetente, texto=texto)
     if not depuracao.get("usuario_apagado"):
@@ -87,17 +90,68 @@ def processar(db: Session, entrada: MensagemEntrada) -> Resultado:
     return Resultado(saida=saida, depuracao=depuracao)
 
 
+def _texto_da_mensagem(db, entrada, mensagem_entrada, telemetria, depuracao) -> tuple[str, str | None]:
+    """O texto que a IA vai ler. Áudio é transcrito aqui (RF03) e segue como texto.
+
+    Devolve (texto, resposta_pronta). Se houver resposta pronta (ex.: áudio sem
+    transcrição configurada), ela vai direto ao usuário, sem chamar a IA.
+    """
+    midia = entrada.midia
+    if midia is None or midia.tipo is not TipoMidia.AUDIO:
+        return entrada.texto, None
+
+    if not roteador.audio_configurado():
+        return "", "🎤 Ainda não consigo ouvir áudios aqui (GROQ_API_KEY vazia no .env). Me conta por escrito?"
+    try:
+        with telemetria.etapa("transcricao") as registro:
+            transcricao = roteador.transcritor().transcrever(midia.conteudo, midia.mime, midia.nome_arquivo)
+            registro["modelo"] = transcricao.modelo
+            registro["duracao_s"] = round(transcricao.duracao_s, 1)
+            registro["custo_usd"] = roteador.custo_transcricao_usd(transcricao.duracao_s)
+    except (ErroTranscricao, ErroIA) as erro:
+        depuracao["erro"] = str(erro)
+        return "", "Não consegui ouvir seu áudio agora 😕 Pode mandar de novo ou escrever?"
+
+    if not transcricao.texto:
+        return "", "Não entendi nada nesse áudio 🤔 Pode gravar de novo, mais perto do microfone?"
+
+    depuracao["transcricao"] = transcricao.texto
+    texto = transcricao.texto if not entrada.texto else f"{entrada.texto}\n{transcricao.texto}"
+    # Grava a transcrição na mensagem: o histórico e o chat passam a mostrar o que foi dito.
+    mensagem_entrada.texto = texto
+    db.commit()
+    return texto, None
+
+
 def _conversar(
     db: Session,
     usuario: Usuario,
     entrada: MensagemEntrada,
+    texto_usuario: str,
     anteriores: list[Mensagem],
     telemetria: Telemetria,
     depuracao: dict,
     aceitou: bool,
     mensagem_id: int,
 ) -> str:
-    rota = roteador.rota("dia_a_dia")
+    foto = entrada.midia if entrada.midia is not None and entrada.midia.tipo is TipoMidia.IMAGEM else None
+    imagens: list[Imagem] = []
+    if foto is not None and aceitou:
+        # Foto do prato: modelo com visão (RF02), com a imagem reduzida antes.
+        preparada = preparar_imagem(foto.conteudo)
+        imagens.append(Imagem(dados=preparada.dados, mime=preparada.mime))
+        depuracao["imagem"] = {
+            "original": preparada.tamanho_original,
+            "enviada": preparada.tamanho_final,
+            "tokens_estimados": tokens_estimados(preparada.largura, preparada.altura),
+        }
+        if not texto_usuario:
+            texto_usuario = "[foto sem legenda]"
+    elif foto is not None:
+        # Antes do aceite a foto não é analisada (seria um dado de saúde).
+        texto_usuario = f"{texto_usuario}\n[o usuário mandou uma foto]".strip()
+
+    rota = roteador.rota("visao" if imagens else "dia_a_dia")
     depuracao.update({"rota": rota.nome, "modelo": rota.modelo, "esforco": rota.esforco})
 
     # Antes do aceite (LGPD), outro prompt e só a ferramenta de aceite. Os dois conjuntos
@@ -110,10 +164,6 @@ def _conversar(
         contexto = registros.texto_contexto_minimo()
     sistema = (PASTA_CONFIG / arquivo_prompt).read_text(encoding="utf-8")  # RF35
 
-    texto_usuario = entrada.texto
-    if entrada.midia is not None:
-        tipo = "uma foto" if entrada.midia.tipo is TipoMidia.IMAGEM else "um áudio"
-        texto_usuario += f"\n[o usuário mandou {tipo}, que você ainda não consegue ver/ouvir]"
     if ferramentas.pedido_de_apagar_pendente(usuario.id):
         # Sem este aviso, a IA não liga o "sim" do usuário ao pedido de apagar e pede
         # confirmação de novo, em laço (visto no teste com a IA real).
@@ -125,7 +175,10 @@ def _conversar(
         )
     depuracao["contexto"] = contexto
 
-    conversa: list[Mensagem] = [*anteriores, MensagemUsuario(texto=texto_usuario, contexto=contexto)]
+    conversa: list[Mensagem] = [
+        *anteriores,
+        MensagemUsuario(texto=texto_usuario, contexto=contexto, imagens=imagens),
+    ]
     ctx = ferramentas.Contexto(db=db, usuario=usuario, canal=entrada.canal, mensagem_id=mensagem_id)
 
     try:
@@ -206,7 +259,11 @@ def _historico(db: Session, usuario: Usuario) -> list[Mensagem]:
             # Com data e hora: sem isso, a IA não sabe que uma conversa foi "ontem" e acha
             # que as refeições sumiram dos registros de hoje.
             quando = para_local(m.criado_em).strftime("%d/%m %H:%M")
-            mensagens.append(MensagemUsuario(texto=f"[{quando}] {m.texto or '[mídia]'}"))
+            conteudo = m.texto or ""
+            if m.tipo_midia == "imagem":
+                # A foto não é reenviada (custaria tokens a cada mensagem); fica o aviso.
+                conteudo = f"[foto] {conteudo}".strip()
+            mensagens.append(MensagemUsuario(texto=f"[{quando}] {conteudo or '[mídia]'}"))
         elif mensagens:  # a conversa enviada à IA precisa começar pelo usuário
             mensagens.append(TurnoAssistente(texto=m.texto))
     return mensagens

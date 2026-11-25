@@ -216,7 +216,12 @@ async function enviar(texto, arquivo) {
       desenharMensagem({ direcao: "saida", texto: `⚠️ Erro ${resposta.status}: ${json.detail}`,
         horario: new Date().toISOString() }, "erro");
     } else {
-      desenharMensagem({ direcao: "saida", ...json.resposta });
+      if (json.depuracao?.transcricao) {
+        // O áudio virou texto no servidor: redesenha para mostrar a transcrição no balão.
+        await carregarHistorico();
+      } else {
+        desenharMensagem({ direcao: "saida", ...json.resposta });
+      }
       mostrarDepuracao(json);
       carregarBanco();
     }
@@ -374,6 +379,13 @@ function mostrarDepuracao(json) {
     bloco.append(titulo, args);
     lista.append(bloco);
   }
+
+  // Foto e áudio (Fase 6): o que foi transcrito e quanto a imagem foi reduzida.
+  const midia = [];
+  if (d.transcricao) midia.push(`🎤 Transcrição: "${d.transcricao}"`);
+  if (d.imagem) midia.push(`📷 Imagem: ${d.imagem.original} → ${d.imagem.enviada} (~${d.imagem.tokens_estimados} tokens)`);
+  $("m-midia").hidden = !midia.length;
+  $("m-midia").textContent = midia.join("\n");
 
   $("m-contexto").textContent = d.contexto || "(sem contexto)";
   $("m-etapas").textContent = (d.etapas || [])

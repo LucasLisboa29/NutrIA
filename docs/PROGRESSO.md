@@ -5,12 +5,13 @@
 
 ## Agora
 
-- **Fase atual:** Fase 6, Foto e áudio (não iniciada)
-- **Próximo passo:** criar a conta na Groq e pôr a `GROQ_API_KEY` no `.env`; depois a
-  interface `Transcritor` (`app/audio/base.py`) e o adaptador Groq.
-- **A conferir pelo Lucas:** gravar um áudio pelo microfone no simulador (o teste
-  automático não consegue usar o microfone).
-- **Bloqueios:** a Fase 6 precisa da API key da Groq (o Lucas cria a conta).
+- **Fase atual:** Fase 7, Calibragem (não iniciada)
+- **Próximo passo:** definir o formato dos cenários de teste (YAML) e o executor com
+  relatório (passou/falhou, custo, tempo).
+- **A conferir pelo Lucas:** (1) gravar um áudio de verdade pelo microfone do simulador;
+  (2) mandar fotos reais de pratos e ver se o Haiku acerta. Se errar muito, voltar a rota
+  `visao` de `config/modelos.yaml` para `claude-sonnet-5-5`.
+- **Bloqueios:** nenhum.
 
 ## Status das fases
 
@@ -23,7 +24,7 @@
 | 3 — Agente v1 (texto) | ✅ Concluído |
 | 4 — Perfil e metas | ✅ Concluído |
 | 5 — Consultas e correções | ✅ Concluído |
-| 6 — Foto e áudio | ⬜ Não iniciado |
+| 6 — Foto e áudio | ✅ Concluído (falta foto real) |
 | 7 — Calibragem | ⬜ Não iniciado |
 | 8 — WhatsApp | ⬜ Não iniciado |
 
@@ -73,6 +74,13 @@
 | 2026-11-24 | Relógio simulado por requisição (ContextVar com deslocamento) | Testar dias/semanas sem esperar e sem afetar outros usuários |
 | 2026-11-24 | Histórico vai para a IA com [dd/mm HH:MM] em cada mensagem do usuário | Sem datas, a IA achou que as refeições de ontem tinham "sumido" |
 | 2026-11-24 | Pedido de apagar pendente aparece no `<contexto>` | Sem isso, a IA real pedia confirmação em laço |
+| 2026-11-24 | Áudio transcrito antes (Groq Whisper, `language=pt` e vocabulário de comidas) e tratado como texto | Um só caminho de conversa; a transcrição fica gravada na mensagem |
+| 2026-11-24 | Sem conversão de áudio | O Whisper aceita webm (navegador) e ogg/opus (WhatsApp) |
+| 2026-11-24 | Fotos reduzidas para no máximo 1568 px, JPEG 85, com rotação EXIF aplicada | Menos tokens e menos tempo, sem perder qualidade para a IA |
+| 2026-11-24 | Rota `visao` com Haiku 5.5 (medium) em vez de Sonnet | Medido na mesma foto: Sonnet medium 9,5 s / US$ 0,036; Haiku 2,9 s / US$ 0,0004; mesmos alimentos. Revisar com fotos reais |
+| 2026-11-24 | `por_foto=true` força itens estimados e confiança no máximo média | Porção vista na foto é palpite (RF02) |
+| 2026-11-24 | Foto não é reenviada no histórico (vira "[foto] legenda") e não é analisada antes do aceite | Custo por mensagem; LGPD |
+| 2026-11-24 | Tomate-cereja como alimento derivado + sinônimos "salada verde", "bife grelhado" | A busca escolhia "tomate, purê" (300 g) e a IA gastava 2 chamadas corrigindo |
 
 ## Diário de sessões
 
@@ -158,3 +166,16 @@
   da semana conferido à mão.
 - Calibrado com a IA real: datas no histórico (a IA dizia que dados "sumiram" na virada
   do dia); não perguntar perfil já completo; aviso de pedido de apagar no contexto.
+
+### 2026-11-24 — Sessão 2 (cont.): Fase 6, foto e áudio
+- Áudio: interface `Transcritor` (`app/audio/base.py`) + `TranscritorGroq`; o áudio é
+  transcrito, gravado como texto na mensagem e segue o fluxo normal. Custo da Groq na
+  telemetria (mínimo de 10 s cobrado).
+- Foto: `app/ia/imagens.py` reduz a imagem; `MensagemUsuario` ganhou `imagens`; a rota
+  `visao` é usada quando há foto; ferramenta com `por_foto`.
+- Painel mostra a transcrição e o tamanho da imagem (original → enviada); chat mostra o
+  texto do áudio no balão.
+- 95 testes passando (transcritor falso + IA falsa).
+- Marco com serviços reais: áudio gerado pela voz do Windows ("Jantei duas fatias de
+  pizza...") → 4,7 s, US$ 0,0016; foto de um prato desenhado → 6,1 s, US$ 0,0009 (Haiku).
+- Comparação de modelos na foto levou à troca Sonnet → Haiku na rota `visao` (ver Decisões).

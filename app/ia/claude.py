@@ -3,6 +3,8 @@
 Traduz os tipos neutros de `base.py` para o formato da API Messages e de volta.
 """
 
+import base64
+
 import anthropic
 
 from app.ia.base import (
@@ -90,6 +92,16 @@ def _converter_mensagens(mensagens: list[Mensagem]) -> list[dict]:
     for mensagem in mensagens:
         if isinstance(mensagem, MensagemUsuario):
             blocos = []
+            # A imagem vai antes do texto: a documentação recomenda essa ordem.
+            for imagem in mensagem.imagens:
+                blocos.append({
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": imagem.mime,
+                        "data": base64.standard_b64encode(imagem.dados).decode("ascii"),
+                    },
+                })
             if mensagem.contexto:
                 blocos.append({"type": "text", "text": mensagem.contexto})
             blocos.append({"type": "text", "text": mensagem.texto or "(mensagem vazia)"})

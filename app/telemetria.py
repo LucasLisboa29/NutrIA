@@ -41,6 +41,6 @@ class Telemetria:
             "tempo_ia_ms": round(sum(e["ms"] for e in chamadas_ia), 1),
             "chamadas_ia": len(chamadas_ia),
             "tokens": tokens.__dict__,
-            "custo_usd": round(sum(e.get("custo_usd", 0) for e in chamadas_ia), 6),
+            "custo_usd": round(sum(e.get("custo_usd", 0) for e in self.etapas), 6),  # IA + áudio
             "etapas": self.etapas,
         }

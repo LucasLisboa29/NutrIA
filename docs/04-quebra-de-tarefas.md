@@ -129,14 +129,14 @@ NutrIA/
 
 ## Fase 6 — Foto e áudio
 
-- [ ] Criar conta na Groq e gerar a API key · P
-- [ ] `audio/base.py` (interface `Transcritor`) + `audio/groq.py` · M
-- [ ] Áudio → texto → mesmo fluxo de texto; mostrar a transcrição no painel [RF03] · P
-- [ ] Converter formatos de áudio, se preciso (WhatsApp usa `.ogg`/opus) · P
-- [ ] Rota de visão: foto (+ legenda) → modelo de visão → `registrar_refeicao` [RF02] · M
-- [ ] Resposta mostrando o que foi identificado, para o usuário conferir · P
-- [ ] Redimensionar imagens grandes antes de enviar (menos tokens, resposta mais rápida) · P
-- [ ] Marco: áudio "jantei duas fatias de pizza" e foto de prato registrados certo · P
+- [x] Criar conta na Groq e gerar a API key · P
+- [x] `audio/base.py` (interface `Transcritor`) + `audio/groq.py` · M
+- [x] Áudio → texto → mesmo fluxo de texto; mostrar a transcrição no painel [RF03] · P
+- [x] Converter formatos de áudio, se preciso (WhatsApp usa `.ogg`/opus) · P (não precisou: o Whisper aceita ogg e webm)
+- [x] Rota de visão: foto (+ legenda) → modelo de visão → `registrar_refeicao` [RF02] · M
+- [x] Resposta mostrando o que foi identificado, para o usuário conferir · P
+- [x] Redimensionar imagens grandes antes de enviar (menos tokens, resposta mais rápida) · P
+- [x] Marco: áudio "jantei duas fatias de pizza" e foto de prato registrados certo · P (foto testada com um prato desenhado; foto real a conferir pelo Lucas)
 
 ## Fase 7 — Calibragem
 

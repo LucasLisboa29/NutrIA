@@ -15,6 +15,7 @@ os.environ["PASTA_UPLOADS"] = str(_PASTA_TESTE / "uploads")
 # Os testes nunca chamam a IA de verdade (custa dinheiro e depende da internet).
 # Quem precisa de IA usa a fixture `ia_falsa`, que responde com um roteiro.
 os.environ["ANTHROPIC_API_KEY"] = ""
+os.environ["GROQ_API_KEY"] = ""  # idem para a transcrição de áudio (fixture `transcritor_falso`)
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -64,3 +65,23 @@ def aceitar_termo(telefone: str) -> None:
         usuario = historico.obter_ou_criar_usuario(sessao, telefone)
         perfil.registrar_aceite(sessao, usuario, "simulador")
         sessao.commit()
+
+
+@pytest.fixture
+def transcritor_falso():
+    """Troca a Groq por um transcritor de mentira: devolve o texto que o teste mandar."""
+    from app.audio.base import Transcricao
+    from app.ia import roteador
+
+    class TranscritorFalso:
+        texto = ""
+        recebidos: list = []
+
+        def transcrever(self, conteudo, mime, nome_arquivo):
+            self.recebidos.append((len(conteudo), mime))
+            return Transcricao(texto=self.texto, duracao_s=4.0, modelo="whisper-falso")
+
+    falso = TranscritorFalso()
+    roteador.registrar_transcritor("groq", falso)
+    yield falso
+    roteador._transcritores.pop("groq", None)

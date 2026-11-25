@@ -72,3 +72,37 @@ def custo_usd(modelo: str, uso: Uso) -> float:
         + uso.cache_escrita * por_token * preco["cache_escrita"]
         + uso.saida * preco["saida"] / 1_000_000
     )
+
+
+# ---------- Transcrição de áudio (Fase 6) ----------
+
+_transcritores: dict = {}
+
+
+def audio_configurado() -> bool:
+    return "groq" in _transcritores or bool(settings.groq_api_key)
+
+
+def transcritor():
+    """O transcritor configurado em `modelos.yaml` (hoje, a Groq)."""
+    nome = carregar_yaml("modelos.yaml")["transcricao"]["provedor"]
+    if nome not in _transcritores:
+        if nome != "groq":
+            raise ErroIA(f"Transcritor desconhecido: {nome!r}")
+        if not settings.groq_api_key:
+            raise ErroIA("GROQ_API_KEY está vazia no .env.")
+        from app.audio.groq import TranscritorGroq
+
+        _transcritores[nome] = TranscritorGroq(settings.groq_api_key)
+    return _transcritores[nome]
+
+
+def registrar_transcritor(nome: str, instancia) -> None:
+    """Troca o transcritor (usado nos testes)."""
+    _transcritores[nome] = instancia
+
+
+def custo_transcricao_usd(duracao_s: float) -> float:
+    config = carregar_yaml("modelos.yaml")["transcricao"]
+    cobrado = max(duracao_s, config.get("cobranca_minima_s", 0))
+    return cobrado / 3600 * config["preco_por_hora"]

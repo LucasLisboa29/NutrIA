@@ -29,7 +29,7 @@ def test_marco_arroz_duas_colheres_de_servir(db):
 
 
 def test_importacao_tem_taco_e_extras(db):
-    assert db.scalar(select(func.count(Alimento.id))) == 600
+    assert db.scalar(select(func.count(Alimento.id))) == 601  # 597 da TACO + 4 extras
     feijao = taco.por_nome_exato(db, "Feijão, carioca, cozido")
     assert (feijao.kcal, feijao.proteina, feijao.origem) == (76, 4.8, "taco")
     macarrao = taco.por_nome_exato(db, "Macarrão, trigo, cozido")

@@ -66,8 +66,9 @@ def test_audio_gravado_no_navegador_e_aceito(cliente):
     enviar(cliente, ANA, "oi")  # a 1ª mensagem recebe as boas-vindas
     resposta = enviar(cliente, ANA, arquivo=audio)
 
-    # Áudio só é entendido na Fase 6; por enquanto o bot pede texto, sem travar.
-    assert "só entendo mensagens de texto" in resposta.json()["resposta"]["texto"]
+    # O áudio é aceito e gravado; sem chave de IA (como nos testes), o bot só avisa.
+    assert resposta.status_code == 200
+    assert "IA ainda não está configurada" in resposta.json()["resposta"]["texto"]
 
 
 def test_resetar_apaga_mensagens_e_arquivos(cliente):

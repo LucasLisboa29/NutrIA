@@ -13,8 +13,11 @@ rotas:
     esforco: low
     max_tokens: 4000
   visao:                # foto do prato (Fase 6)
+    # Medido em 24/11 com a mesma foto (1ª chamada): Sonnet medium 9,5 s / US$ 0,036;
+    # Sonnet low 3,1 s / US$ 0,010; Haiku medium 2,9 s / US$ 0,0004. Todos acharam os
+    # mesmos alimentos. Se errar em fotos reais, voltar para claude-sonnet-5-5.
     provedor: claude
-    modelo: claude-sonnet-5-5
+    modelo: claude-haiku-5-5
     esforco: medium
     max_tokens: 6000
   dificil:              # conversas ambíguas / complexas
@@ -39,3 +42,7 @@ precos:
 transcricao:
   provedor: groq
   modelo: whisper-large-v3-turbo
+  # Preço em dólares por hora de áudio; a Groq cobra no mínimo 10 s por pedido.
+  # Conferir de tempos em tempos em https://groq.com/pricing
+  preco_por_hora: 0.04
+  cobranca_minima_s: 10

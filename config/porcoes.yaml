@@ -239,6 +239,9 @@ alimentos:
     padrao: 30
     folha: 8
     prato: 50
+  "Tomate, cereja, cru":
+    padrao: 50
+    unidade: 12
   "Tomate, com semente, cru":
     padrao: 50
     unidade: 100

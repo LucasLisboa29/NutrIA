@@ -19,6 +19,7 @@ RapidFuzz==3.14.6           # busca aproximada de nomes de alimentos (Fase 2)
 # IA e áudio
 anthropic==2.12.0           # SDK oficial do Claude (Fase 3)
 groq==1.7.0                 # transcrição de áudio (Fase 6)
+pillow==13.0.0              # redimensionar fotos antes de mandar para a IA (Fase 6)
 
 # Testes
 pytest==9.2.0

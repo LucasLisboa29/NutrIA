@@ -122,6 +122,10 @@ DEFINICOES = [
                     "type": ["integer", "null"],
                     "description": "Só para acrescentar itens a uma refeição já registrada.",
                 },
+                "por_foto": {
+                    "type": ["boolean", "null"],
+                    "description": "true quando os itens e porções foram estimados a partir de uma foto.",
+                },
                 "itens": {"type": "array", "items": _ITEM, "minItems": 1},
             },
             "required": ["tipo", "itens"],
@@ -325,6 +329,12 @@ def registrar_refeicao(ctx: Contexto, args: dict) -> dict:
             nao_encontrados.append(item.get("alimento", ""))
             continue
         for calculado in calculados:
+            if args.get("por_foto"):
+                # RF02: porção vista na foto é sempre um palpite, mesmo se vier em gramas.
+                calculado.estimado = True
+                if calculado.confianca == porcoes.ALTA:
+                    calculado.confianca = porcoes.MEDIA
+                calculado.explicacao = f"estimado pela foto: {calculado.explicacao}"
             novos.append(_novo_item(item, calculado))
 
     if not novos and not refeicao.itens:

@@ -42,6 +42,13 @@ novos:
     fibra: 2.5
     sodio: 480
 
+  - id: 10004
+    nome: "Tomate, cereja, cru"
+    categoria: "Verduras, hortaliças e derivados"
+    origem: derivado
+    base: "Tomate, com semente, cru"
+    fator: 1.0  # mesma composição por 100 g; muda só o peso da unidade (porcoes.yaml)
+
 correcoes:
   - nome: "Leite, de vaca, integral"
     kcal: 61

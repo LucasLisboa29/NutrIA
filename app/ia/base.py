@@ -56,9 +56,16 @@ class RespostaIA:
 
 
 @dataclass
+class Imagem:
+    dados: bytes
+    mime: str  # ex.: "image/jpeg"
+
+
+@dataclass
 class MensagemUsuario:
     texto: str
     contexto: str = ""  # informações do sistema que vão junto (data, registros de hoje)
+    imagens: list[Imagem] = field(default_factory=list)  # foto do prato (Fase 6)
 
 
 @dataclass
