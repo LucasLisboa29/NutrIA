@@ -134,6 +134,13 @@ novos:
       - {alimento: "Manteiga, com sal", gramas: 60}
       - {alimento: "Ovo, de galinha, inteiro, cru", gramas: 100}
 
+  - id: 10015
+    nome: "Rosquinha, pão doce pequeno"
+    categoria: "Cereais e derivados"
+    origem: derivado
+    base: "Rosca doce (pão doce)"
+    fator: 1.0  # mesma massa da rosca doce; a unidade é menor (porcoes.yaml)
+
   - id: 10012
     nome: "Creme de confeiteiro"
     categoria: "Alimentos preparados"

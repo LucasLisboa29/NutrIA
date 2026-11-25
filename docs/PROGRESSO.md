@@ -5,12 +5,10 @@
 
 ## Agora
 
-- **Fase atual:** Fase 6.5, Fotos de verdade (Etapas 1 e 2 concluídas)
-- **Próximo passo:** Etapa 3: rodar as 11 fotos de `Treinamento NutrIA/` no app real e medir
-  (itens certos, erro de kcal ≤ 25%, zero trocas graves, ≤ 2 chamadas, ≤ 10 s, ≤ US$ 0,002).
+- **Fase atual:** Fase 7, Calibragem (não iniciada). A 6.5 (fotos de verdade) terminou.
+- **Próximo passo:** transformar as 11 fotos e os exemplos dos requisitos em cenários de teste
+  automáticos (YAML + executor com relatório), para não perder a calibragem já feita.
 - **A conferir pelo Lucas:** gravar um áudio de verdade pelo microfone do simulador.
-- **Material de calibragem:** fotos e análise em `Treinamento NutrIA/` (fora do Git, fotos
-  pessoais). Apagar a pasta quando a calibragem das fotos terminar (pedido do Lucas).
 - **Bloqueios:** nenhum.
 
 ## Status das fases
@@ -25,7 +23,7 @@
 | 4 — Perfil e metas | ✅ Concluído |
 | 5 — Consultas e correções | ✅ Concluído |
 | 6 — Foto e áudio | ✅ Concluído |
-| 6.5 — Fotos de verdade | 🟡 Etapas 1 e 2 de 3 concluídas |
+| 6.5 — Fotos de verdade | ✅ Concluído |
 | 7 — Calibragem | ⬜ Não iniciado |
 | 8 — WhatsApp | ⬜ Não iniciado |
 
@@ -98,6 +96,11 @@
 | 2026-11-24 | Produto do OFF de outro país = confiança baixa e perde para o rótulo lido na foto | Cobertura brasileira pequena; o Monster Ultra achado era o australiano |
 | 2026-11-24 | Embalagem só vira porção se for individual (≤ 600 g/ml) | "1 lata de Toddy" virava 1 kg (4.000 kcal) |
 | 2026-11-24 | Testes com OFF desligado (`OPENFOODFACTS_ATIVO=false`) e API falsa | Testes não podem depender da internet (um teste achou "sushi" no OFF real) |
+| 2026-11-25 | Peso informado (g/ml) ignora o tamanho | A IA mandou "600 g" + "grande" e virou 840 g |
+| 2026-11-25 | Prato meio comido só com sinais claros (restos, prato quase vazio); na dúvida registra e pergunta | A regra rígida deixou de gravar um pão aberto com manteiga |
+| 2026-11-25 | Open Food Facts só quando a IA informa `marca` | Nomes genéricos traziam produtos errados ("chocolate quente" → achocolatado em pó, 1.037 kcal) |
+| 2026-11-25 | Foto com um item só: o item é da pessoa | O bot perguntou "a lata é sua?" numa foto só da lata |
+| 2026-11-25 | Testes com a IA real sem mexer em arquivos do projeto durante a rodada | Criar arquivo no projeto recarrega o servidor no meio do teste (um pedido caiu no código antigo) |
 
 ## Diário de sessões
 
@@ -225,3 +228,13 @@
   leite") não são achados e a IA tenta de novo (1 chamada a mais). Medir na Etapa 3.
 - Os testes ficaram mais lentos (~50 s): cada teste reimporta os 611 alimentos. Otimizar
   depois (carregar a base uma vez por rodada).
+
+### 2026-11-25 — Sessão 3: Fase 6.5, Etapa 3 (fotos no app real)
+- As 11 fotos de calibragem rodadas no app real (Haiku 5.5), com a legenda do Lucas e um dia
+  simulado por foto; 3 rodadas, US$ 0,023 no total.
+- Resultado final: todas as que registraram ficaram com erro ≤ 25%; zero alimentos trocados;
+  11/11 em até 10 s; ≤ 2 chamadas e ≤ US$ 0,002 em 10/11 (exceção: Monster, 3 chamadas).
+- Corrigido com base na medição: peso × tamanho (código), regra do prato meio comido
+  (prompt), "rosquinha" (base), Open Food Facts só com `marca` (código + prompt).
+- Resultados detalhados em `Treinamento NutrIA/` (fora do Git).
+- 134 testes passando.

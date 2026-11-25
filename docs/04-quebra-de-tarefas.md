@@ -159,7 +159,8 @@ NutrIA/
 - [x] Open Food Facts para produtos de marca (com atribuição, licença ODbL) · G
 
 **Etapa 3: teste real**
-- [ ] Rodar as 11 fotos no app real e medir: itens certos, erro de kcal ≤ 25%, zero trocas graves, ≤ 2 chamadas, ≤ 10 s, ≤ US$ 0,002 · M
+- [x] Rodar as 11 fotos no app real e medir: itens certos, erro de kcal ≤ 25%, zero trocas graves, ≤ 2 chamadas, ≤ 10 s, ≤ US$ 0,002 · M
+- [x] Corrigir o que a medição mostrou (peso × tamanho, prato meio comido, rosquinha, Open Food Facts só com marca) · M
 
 ## Fase 7 — Calibragem
 

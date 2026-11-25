@@ -108,3 +108,20 @@ def test_tipo_ao_longo_do_dia_existe_para_bebidas_e_beliscos():
     assert registros.TIPOS["avulso"] == "Ao longo do dia"
     definicao = next(f for f in ferramentas.DEFINICOES if f.nome == "registrar_refeicao")
     assert "avulso" in definicao.parametros["properties"]["tipo"]["enum"]
+
+
+# ---------- Ajustes da Etapa 3 (teste com as fotos reais) ----------
+
+
+def test_peso_informado_nao_e_multiplicado_pelo_tamanho(db):
+    # Foto 1: a IA mandou "600 g" e "grande"; virava 840 g.
+    assert calculo.calcular(db, "carbonara", 600, "g", "grande").gramas == 600
+    assert calculo.calcular(db, "arroz", 100, "g", "grande").gramas == 100
+    # Em medida caseira o tamanho continua valendo.
+    assert calculo.calcular(db, "feijão", 1, "concha", "grande").gramas == 196
+
+
+def test_rosquinha_e_pao_doce_pequeno(db):
+    # Foto 9: "duas rosquinhas" virava 2 roscas grandes (160 g).
+    item = calculo.calcular(db, "rosquinhas", 2, "unidade")
+    assert item.alimento == "Rosquinha, pão doce pequeno" and item.gramas == 90

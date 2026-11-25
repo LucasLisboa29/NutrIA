@@ -166,7 +166,7 @@ def off_falso(monkeypatch):
 
 
 MONSTER = {"descricao": "lata de Monster", "alimento": "Monster Energy Ultra Peachy Keen",
-           "quantidade": 1, "unidade": "lata"}
+           "quantidade": 1, "unidade": "lata", "marca": "Monster"}
 
 
 def test_produto_de_marca_vem_do_open_food_facts(cliente, ia_falsa, off_falso):
@@ -204,3 +204,11 @@ def test_quantidade_da_embalagem():
     assert openfoodfacts._quantidade_em_gramas("1,5 L") == 1500
     assert openfoodfacts._quantidade_em_gramas("6 x 330 ml") == 330
     assert openfoodfacts._quantidade_em_gramas("sem info") is None
+
+
+def test_nome_generico_nao_vai_ao_open_food_facts(cliente, ia_falsa, off_falso):
+    # Etapa 3, foto 7: "chocolate quente" trazia um achocolatado EM PÓ (1.037 kcal na caneca).
+    off_falso["resposta"]["hits"] = [produto_falso(nome="chocolate quente", kcal=432)]
+    resultado = registrar(cliente, ia_falsa, [{"descricao": "caneca", "alimento": "chocolate quente"}])
+    assert off_falso["chamadas"] == []  # sem marca, nem consulta
+    assert resultado["registrado"] is False

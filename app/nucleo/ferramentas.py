@@ -18,6 +18,7 @@ from app.banco.modelos import ItemRefeicao, Refeicao, Usuario
 from app.ia.base import Ferramenta
 from app.nutricao import calculo, openfoodfacts, porcoes, taco
 from app.nutricao.calculo import ItemCalculado
+from app.nutricao.texto import normalizar
 from app.nucleo import memoria, revisao
 from app.nucleo import perfil as perfis
 from app.nucleo import registros
@@ -72,6 +73,14 @@ _ITEM = {
             "type": ["string", "null"],
             "enum": ["pequeno", "medio", "grande", "cheio", "raso", None],
             "description": "Só se o usuário indicou o tamanho.",
+        },
+        "marca": {
+            "type": ["string", "null"],
+            "description": (
+                "Marca do produto, só quando aparece na foto/rótulo ou o usuário diz "
+                "(ex.: 'Monster', 'Toddy', 'Nestlé'). Com marca, o sistema procura numa base "
+                "de rótulos de produtos. Comida caseira ou genérica: null."
+            ),
         },
         "estimativa_ia": {
             "type": ["object", "null"],
@@ -723,8 +732,14 @@ def _calcular_item(
     except taco.AlimentoNaoEncontrado:
         pass
 
-    # 3. Open Food Facts (produto de outro país perde para o rótulo lido na foto)
-    produto = openfoodfacts.buscar(db, termo)
+    # 3. Open Food Facts, SÓ para produto de marca. Nome genérico ("chocolate quente")
+    #    trazia produtos errados (achocolatado em pó contado como bebida pronta).
+    #    Produto de outro país perde para o rótulo lido na foto.
+    marca = (item.get("marca") or "").strip()
+    produto = None
+    if marca:
+        busca = termo if normalizar(marca) in normalizar(termo) else f"{marca} {termo}"
+        produto = openfoodfacts.buscar(db, busca)
     if produto is not None and (produto.do_brasil or not estimativa):
         return [openfoodfacts.calcular(produto, quantidade, unidade, tamanho, minhas_medidas)]
 

@@ -112,6 +112,10 @@ alimentos:
     padrao: 60
     colher de sopa: 20
     concha: 100
+  "Rosquinha, pão doce pequeno":
+    padrao: 90
+    unidade: 45
+    pedaco: 45
   "Rosca doce (pão doce)":
     padrao: 80
     unidade: 80

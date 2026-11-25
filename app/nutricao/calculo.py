@@ -136,7 +136,7 @@ def calcular_prato(
     if quantidade and unidade_norm in porcoes._PESO_VOLUME:
         peso_porcao = sum(i["gramas"] for i in prato["ingredientes"])
         gramas_pedidas = quantidade * regras["medidas"][unidade_norm]
-        multiplicador = gramas_pedidas / peso_porcao * fator_tamanho
+        multiplicador = gramas_pedidas / peso_porcao  # o peso já diz o tamanho
     else:
         multiplicador = (quantidade or 1) * fator_tamanho
 

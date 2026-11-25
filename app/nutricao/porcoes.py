@@ -55,6 +55,9 @@ def para_gramas(
     quantidade = 1 if quantidade is None else quantidade
     unidade_norm = normalizar_unidade(unidade or "unidade", regras)
     medidas_usuario = medidas_usuario or {}
+    if unidade_norm in _PESO_VOLUME and nome_tamanho:
+        # Peso informado já é o tamanho: "600 g, grande" são 600 g, não 600 × 1,4.
+        fator, nome_tamanho, sufixo = 1.0, None, ""
 
     if unidade_norm in medidas_usuario:
         # Camada 1: a pessoa ensinou ("minha caneca tem 350 ml"). Vale mais que a média.
