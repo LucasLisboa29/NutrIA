@@ -317,3 +317,47 @@ button:disabled { opacity: 0.5; cursor: wait; }
 }
 
 .painel button.mini { padding: 1px 6px; margin-left: 4px; font-size: 11px; }
+
+/* ---------- Celular de verdade (tela estreita) ----------
+   No celular a conversa ocupa a tela toda, como no WhatsApp. Os controles do simulador
+   ficam escondidos e abrem por cima pelo botão ⚙️ do topo. */
+.btn-painel, .btn-fechar-painel { display: none; }
+.painel-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+@media (max-width: 600px) {
+  .layout { padding: 0; gap: 0; display: block; min-height: 0; }
+  .celular {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;      /* altura real visível (sem a barra do navegador) */
+    min-height: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .topo { padding-top: max(10px, env(safe-area-inset-top)); }
+  .barra { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  .balao { max-width: 85%; font-size: 15.5px; }
+  #texto { font-size: 16px; } /* com menos de 16px o iPhone dá zoom ao digitar */
+
+  .btn-painel, .btn-fechar-painel {
+    display: block;
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    cursor: pointer;
+  }
+  .btn-fechar-painel { margin-left: 0; color: var(--texto); }
+  .painel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    overflow-y: auto;
+    z-index: 10;
+    padding: max(12px, env(safe-area-inset-top)) 12px 24px;
+    background: var(--fundo-app);
+  }
+  body.painel-aberto .painel { display: flex; }
+}

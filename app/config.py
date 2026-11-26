@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     pasta_uploads: Path = RAIZ / "uploads"
     # Consultar o Open Food Facts (internet) para produtos de marca. Os testes desligam.
     openfoodfacts_ativo: bool = True
+    # Senha para abrir o simulador num servidor público. Vazia = sem senha (uso no PC).
+    senha_acesso: str = ""
 
 
 @lru_cache

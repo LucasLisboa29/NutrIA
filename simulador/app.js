@@ -545,3 +545,7 @@ async function carregarRevisao() {
   carregarBanco();
   campoTexto.focus();
 })();
+
+// ---------- Celular: abrir e fechar os controles do simulador ----------
+$("btn-painel").addEventListener("click", () => document.body.classList.add("painel-aberto"));
+$("btn-fechar-painel").addEventListener("click", () => document.body.classList.remove("painel-aberto"));

@@ -1,0 +1,15 @@
+# O que NÃO vai para a imagem do servidor
+.env
+.venv/
+.git/
+**/__pycache__/
+.pytest_cache/
+*.db
+uploads/
+tests/
+cenarios/
+docs/
+Obsidian/
+Conteudo adicional/
+Treinamento NutrIA/
+.claude/

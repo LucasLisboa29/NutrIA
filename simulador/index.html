@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#008069">
   <title>NutrIA · Simulador</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -16,6 +17,8 @@
           <strong>NutrIA</strong>
           <span id="status">online</span>
         </div>
+        <!-- Só aparece no celular: abre os controles do simulador por cima da conversa -->
+        <button type="button" id="btn-painel" class="btn-painel" title="Controles do simulador" aria-label="Controles do simulador">⚙️</button>
       </header>
 
       <div id="conversa" class="conversa" aria-live="polite"></div>
@@ -37,7 +40,10 @@
 
     <!-- Controles do simulador (não existem no WhatsApp) -->
     <aside class="painel">
-      <h1>Simulador NutrIA</h1>
+      <div class="painel-topo">
+        <h1>Simulador NutrIA</h1>
+        <button type="button" id="btn-fechar-painel" class="btn-fechar-painel" aria-label="Voltar para a conversa">✕</button>
+      </div>
 
       <section>
         <h2>Usuário de teste</h2>
